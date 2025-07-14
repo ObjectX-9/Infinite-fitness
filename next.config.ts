@@ -6,13 +6,7 @@ const nextConfig: NextConfig = {
     domains: ['placehold.co'],
     unoptimized: true,
   },
-  // 关闭错误提示toast
-  onError: () => {},
-  devIndicators: {
-    buildActivity: false,
-  },
-  // 抑制水合警告
-  suppressHydrationWarnings: true,
+  devIndicators: false,
 };
 
 export default nextConfig;
