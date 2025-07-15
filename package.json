@@ -6,7 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prepare": "husky",
+    "type-check": "tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "npm run type-check"
+    ]
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -55,8 +63,10 @@
     "css-loader": "^7.1.2",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
+    "husky": "^9.1.7",
     "less": "^4.3.0",
     "less-loader": "^12.3.0",
+    "lint-staged": "^16.1.2",
     "postcss-import": "^16.1.1",
     "postcss-less": "^6.0.0",
     "postcss-loader": "^8.1.1",
