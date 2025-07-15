@@ -1,5 +1,5 @@
 "use client";
-import { mockTrainingPlans } from "@/module/fit-record/trainingPlan";
+import { mockTrainingPlans } from "@/module/fit-record/trainingPlan/mockData";
 import {
   TrainingPlan as TrainingPlanType,
   TrainingDay,
