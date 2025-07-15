@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Card,
@@ -15,9 +15,7 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              总用户数
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">总用户数</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -35,16 +33,12 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,204</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% 较上月
-            </p>
+            <p className="text-xs text-muted-foreground">+20.1% 较上月</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              会员数
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">会员数</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -60,9 +54,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">354</div>
-            <p className="text-xs text-muted-foreground">
-              +15.2% 较上月
-            </p>
+            <p className="text-xs text-muted-foreground">+15.2% 较上月</p>
           </CardContent>
         </Card>
         <Card>
@@ -84,16 +76,12 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">627</div>
-            <p className="text-xs text-muted-foreground">
-              +8.2% 较上周
-            </p>
+            <p className="text-xs text-muted-foreground">+8.2% 较上周</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              总收入
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">总收入</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -109,9 +97,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">¥45,231.89</div>
-            <p className="text-xs text-muted-foreground">
-              +19.5% 较上月
-            </p>
+            <p className="text-xs text-muted-foreground">+19.5% 较上月</p>
           </CardContent>
         </Card>
       </div>
@@ -125,9 +111,7 @@ export default function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>系统概览</CardTitle>
-              <CardDescription>
-                查看系统整体运行状况和关键指标
-              </CardDescription>
+              <CardDescription>查看系统整体运行状况和关键指标</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
               <div className="h-[200px] flex items-center justify-center text-muted-foreground">
@@ -140,9 +124,7 @@ export default function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>数据分析</CardTitle>
-              <CardDescription>
-                查看详细的数据分析报告
-              </CardDescription>
+              <CardDescription>查看详细的数据分析报告</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
               <div className="h-[200px] flex items-center justify-center text-muted-foreground">
@@ -155,9 +137,7 @@ export default function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>报告中心</CardTitle>
-              <CardDescription>
-                查看系统生成的各种报告
-              </CardDescription>
+              <CardDescription>查看系统生成的各种报告</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
               <div className="h-[200px] flex items-center justify-center text-muted-foreground">
@@ -169,4 +149,4 @@ export default function AdminDashboard() {
       </Tabs>
     </div>
   );
-} 
+}

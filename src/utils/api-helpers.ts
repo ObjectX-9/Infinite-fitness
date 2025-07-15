@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongoose';
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/mongoose";
 
 /**
  * 统一的API响应数据结构
@@ -14,7 +14,6 @@ export interface ApiResponse<T = any> {
   timestamp?: number;
 }
 
-
 /**
  * 统一的API错误类型
  */
@@ -24,7 +23,7 @@ export class ApiError extends Error {
 
   constructor(message: string, code: number = 500, statusCode: number = 500) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.code = code;
     this.statusCode = statusCode;
   }
@@ -35,35 +34,41 @@ export class ApiError extends Error {
  */
 export const ApiErrors = {
   // 400 错误
-  BAD_REQUEST: (message = '请求参数错误') => new ApiError(message, 400, 400),
-  VALIDATION_ERROR: (message = '数据验证失败') => new ApiError(message, 400, 400),
-  MISSING_PARAMS: (message = '缺少必要参数') => new ApiError(message, 400, 400),
+  BAD_REQUEST: (message = "请求参数错误") => new ApiError(message, 400, 400),
+  VALIDATION_ERROR: (message = "数据验证失败") =>
+    new ApiError(message, 400, 400),
+  MISSING_PARAMS: (message = "缺少必要参数") => new ApiError(message, 400, 400),
 
   // 401 错误
-  UNAUTHORIZED: (message = '未授权访问') => new ApiError(message, 401, 401),
-  TOKEN_EXPIRED: (message = '令牌已过期') => new ApiError(message, 401, 401),
-  INVALID_TOKEN: (message = '无效的令牌') => new ApiError(message, 401, 401),
+  UNAUTHORIZED: (message = "未授权访问") => new ApiError(message, 401, 401),
+  TOKEN_EXPIRED: (message = "令牌已过期") => new ApiError(message, 401, 401),
+  INVALID_TOKEN: (message = "无效的令牌") => new ApiError(message, 401, 401),
 
   // 403 错误
-  FORBIDDEN: (message = '禁止访问') => new ApiError(message, 403, 403),
-  INSUFFICIENT_PERMISSIONS: (message = '权限不足') => new ApiError(message, 403, 403),
+  FORBIDDEN: (message = "禁止访问") => new ApiError(message, 403, 403),
+  INSUFFICIENT_PERMISSIONS: (message = "权限不足") =>
+    new ApiError(message, 403, 403),
 
   // 404 错误
-  NOT_FOUND: (message = '资源不存在') => new ApiError(message, 404, 404),
-  USER_NOT_FOUND: (message = '用户不存在') => new ApiError(message, 404, 404),
-  ARTICLE_NOT_FOUND: (message = '文章不存在') => new ApiError(message, 404, 404),
+  NOT_FOUND: (message = "资源不存在") => new ApiError(message, 404, 404),
+  USER_NOT_FOUND: (message = "用户不存在") => new ApiError(message, 404, 404),
+  ARTICLE_NOT_FOUND: (message = "文章不存在") =>
+    new ApiError(message, 404, 404),
 
   // 409 错误
-  CONFLICT: (message = '资源冲突') => new ApiError(message, 409, 409),
-  DUPLICATE_ENTRY: (message = '数据已存在') => new ApiError(message, 409, 409),
+  CONFLICT: (message = "资源冲突") => new ApiError(message, 409, 409),
+  DUPLICATE_ENTRY: (message = "数据已存在") => new ApiError(message, 409, 409),
 
   // 429 错误
-  RATE_LIMIT: (message = '请求过于频繁') => new ApiError(message, 429, 429),
+  RATE_LIMIT: (message = "请求过于频繁") => new ApiError(message, 429, 429),
 
   // 500 错误
-  INTERNAL_ERROR: (message = '服务器内部错误') => new ApiError(message, 500, 500),
-  DATABASE_ERROR: (message = '数据库连接错误') => new ApiError(message, 500, 500),
-  EXTERNAL_API_ERROR: (message = '外部API调用失败') => new ApiError(message, 500, 500),
+  INTERNAL_ERROR: (message = "服务器内部错误") =>
+    new ApiError(message, 500, 500),
+  DATABASE_ERROR: (message = "数据库连接错误") =>
+    new ApiError(message, 500, 500),
+  EXTERNAL_API_ERROR: (message = "外部API调用失败") =>
+    new ApiError(message, 500, 500),
 };
 
 /**
@@ -75,7 +80,7 @@ export const ApiErrors = {
  */
 export function successResponse<T>(
   data?: T,
-  message: string = '操作成功',
+  message: string = "操作成功",
   code: number = 200
 ): NextResponse<ApiResponse<T>> {
   const response: ApiResponse<T> = {
@@ -83,7 +88,7 @@ export function successResponse<T>(
     success: true,
     message,
     data,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 
   return NextResponse.json(response, { status: 200 });
@@ -122,22 +127,21 @@ export function errorResponse(
   const response: ApiResponse = {
     code: finalCode,
     success: false,
-    message: '操作失败',
+    message: "操作失败",
     error: message,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 
   return NextResponse.json(response, { status: finalStatusCode });
 }
 
 /**
- * 统一的异步错误处理装饰器
- * 用于包装API路由处理函数，自动捕获错误并返回统一格式
- * 并自动处理数据库连接
+ * 统一的接口处理函数
+ * 链接数据库，自动捕获错误并返回统一格式
  * @param handler API路由处理函数
  * @returns 包装后的处理函数
  */
-export function withErrorHandler<T extends any[], R>(
+export function unifiedInterfaceProcess<T extends any[], R>(
   handler: (...args: T) => Promise<NextResponse<ApiResponse<R>>>
 ) {
   return async (...args: T): Promise<NextResponse<ApiResponse<R>>> => {
@@ -150,10 +154,10 @@ export function withErrorHandler<T extends any[], R>(
 
       return NextResponse.json(responseData, {
         status: response.status,
-        headers: response.headers
+        headers: response.headers,
       });
     } catch (error) {
-      console.error('API Error:', error);
+      console.error("API Error:", error);
 
       if (error instanceof ApiError) {
         return errorResponse(error);
@@ -161,23 +165,35 @@ export function withErrorHandler<T extends any[], R>(
 
       if (error instanceof Error) {
         // 根据错误类型判断状态码
-        if (error.message.includes('not found') || error.message.includes('不存在')) {
+        if (
+          error.message.includes("not found") ||
+          error.message.includes("不存在")
+        ) {
           return errorResponse(error, 404);
         }
-        if (error.message.includes('unauthorized') || error.message.includes('未授权')) {
+        if (
+          error.message.includes("unauthorized") ||
+          error.message.includes("未授权")
+        ) {
           return errorResponse(error, 401);
         }
-        if (error.message.includes('forbidden') || error.message.includes('禁止')) {
+        if (
+          error.message.includes("forbidden") ||
+          error.message.includes("禁止")
+        ) {
           return errorResponse(error, 403);
         }
-        if (error.message.includes('validation') || error.message.includes('验证')) {
+        if (
+          error.message.includes("validation") ||
+          error.message.includes("验证")
+        ) {
           return errorResponse(error, 400);
         }
 
         return errorResponse(error, 500);
       }
 
-      return errorResponse('未知错误', 500);
+      return errorResponse("未知错误", 500);
     }
   };
 }
@@ -198,12 +214,15 @@ export function paginatedResponse<T>(
     totalPages: number;
     hasMore: boolean;
   },
-  message: string = '获取成功'
+  message: string = "获取成功"
 ): NextResponse<ApiResponse<{ items: T[]; pagination: typeof pagination }>> {
-  return successResponse({
-    items,
-    pagination
-  }, message);
+  return successResponse(
+    {
+      items,
+      pagination,
+    },
+    message
+  );
 }
 
 /**
@@ -222,11 +241,45 @@ export function createPagination(page: number, limit: number, total: number) {
     limit,
     total,
     totalPages,
-    hasMore
+    hasMore,
   };
-} 
+}
 
+/**
+ * 创建更新字段对象，只包含请求体中实际传入的字段
+ * @param requestBody 请求体对象
+ * @param allowedFields 允许更新的字段列表，如不提供则自动使用requestBody中所有字段（除了特定排除字段）
+ * @param excludeFields 需要排除的字段列表，默认排除 _id, id, userId, createdAt, updatedAt 等字段
+ * @returns 只包含请求体中实际传入字段的更新对象
+ */
+export function createUpdateFields<
+  T extends Record<string, any>,
+  K extends keyof T
+>(
+  requestBody: T,
+  allowedFields?: K[],
+  excludeFields: string[] = ["_id", "id", "userId", "createdAt", "updatedAt"]
+): Record<string, unknown> {
+  const updateFields: Record<string, unknown> = {};
 
+  // 如果提供了允许字段列表，则使用它
+  if (allowedFields && allowedFields.length > 0) {
+    allowedFields.forEach((field) => {
+      if (field in requestBody) {
+        updateFields[field as string] = requestBody[field];
+      }
+    });
+  } else {
+    // 否则使用requestBody中的所有字段（排除特定字段）
+    Object.keys(requestBody).forEach((key) => {
+      if (!excludeFields.includes(key)) {
+        updateFields[key] = requestBody[key];
+      }
+    });
+  }
+
+  return updateFields;
+}
 
 // 请求参数处理工具
 
@@ -289,18 +342,23 @@ export class ApiParams {
   getBoolean(key: string, defaultValue?: boolean): boolean | undefined {
     const value = this.searchParams.get(key);
     if (!value) return defaultValue;
-    return value.toLowerCase() === 'true';
+    return value.toLowerCase() === "true";
   }
 
   /**
    * 获取分页参数
    */
-  getPagination(defaultPage = 1, defaultLimit = 20, defaultTotal = 0, defaultHasMore = false) {
+  getPagination(
+    defaultPage = 1,
+    defaultLimit = 20,
+    defaultTotal = 0,
+    defaultHasMore = false
+  ) {
     return {
-      page: this.getNumber('page', defaultPage)!,
-      limit: this.getNumber('limit', defaultLimit)!,
-      total: this.getNumber('total', defaultTotal)!,
-      hasMore: this.getBoolean('hasMore', defaultHasMore)!
+      page: this.getNumber("page", defaultPage)!,
+      limit: this.getNumber("limit", defaultLimit)!,
+      total: this.getNumber("total", defaultTotal)!,
+      hasMore: this.getBoolean("hasMore", defaultHasMore)!,
     };
   }
 }
@@ -317,11 +375,12 @@ export class RequestValidator {
     requiredFields: (keyof T)[]
   ): void {
     const missingFields = requiredFields.filter(
-      field => data[field] === undefined || data[field] === null || data[field] === ''
+      (field) =>
+        data[field] === undefined || data[field] === null || data[field] === ""
     );
 
     if (missingFields.length > 0) {
-      throw new Error(`缺少必需字段: ${missingFields.join(', ')}`);
+      throw new Error(`缺少必需字段: ${missingFields.join(", ")}`);
     }
   }
 
@@ -332,7 +391,7 @@ export class RequestValidator {
     data: T,
     numberFields: (keyof T)[]
   ): void {
-    numberFields.forEach(field => {
+    numberFields.forEach((field) => {
       const value = data[field];
       if (value !== undefined && value !== null && isNaN(Number(value))) {
         throw new Error(`字段 ${String(field)} 必须是数字`);
@@ -349,7 +408,7 @@ export class RequestValidator {
   ): Partial<T> {
     const sanitized: Partial<T> = {};
 
-    Object.keys(data).forEach(key => {
+    Object.keys(data).forEach((key) => {
       // 如果指定了允许的字段，只保留这些字段
       if (allowedFields && !allowedFields.includes(key as keyof T)) {
         return;
@@ -357,7 +416,7 @@ export class RequestValidator {
 
       const value = data[key];
       // 只保留非空值
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null && value !== "") {
         sanitized[key as keyof T] = value;
       }
     });
@@ -382,4 +441,4 @@ export async function parseRequestBody<T = any>(request: Request): Promise<T> {
   } catch (error) {
     throw new Error(`无效的请求体格式: ${error}`);
   }
-} 
+}

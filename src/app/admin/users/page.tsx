@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { userBusiness } from '@/app/business/user';
-import { User, UserStatus } from '@/model/user/type';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import { userBusiness } from "@/app/business/user";
+import { membershipBusiness } from "@/app/business/membership";
+import { User, UserStatus } from "@/model/user/type";
+import { UserMembership, MembershipLevel } from "@/model/user-member/type";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,14 +72,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Search, Edit, MoreVertical } from "lucide-react";
-import { UserModal } from '@/components/UserModal';
+import { UserModal } from "@/components/admin/users/UserModal";
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
-  console.log('✅ ✅ ✅ ~  UserManagement ~  users:', users);
+  const [memberships, setMemberships] = useState<
+    Record<string, UserMembership>
+  >({});
   const [loading, setLoading] = useState(false);
-  const [keyword, setKeyword] = useState('');
-  const [status, setStatus] = useState<UserStatus | 'all'>('all');
+  const [keyword, setKeyword] = useState("");
+  const [status, setStatus] = useState<UserStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
@@ -85,6 +89,9 @@ export default function UserManagement() {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [newStatus, setNewStatus] = useState<UserStatus>(UserStatus.ACTIVE);
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [isSettingAdmin, setIsSettingAdmin] = useState(false);
 
   // 加载用户数据
   const loadUsers = async () => {
@@ -92,19 +99,46 @@ export default function UserManagement() {
     try {
       const params: Record<string, unknown> = { page, limit };
       if (keyword) params.keyword = keyword;
-      if (status !== 'all') params.status = status;
+      if (status !== "all") params.status = status;
 
       const result = await userBusiness.getUserList(params);
       setUsers(result.items);
       setTotal(result.pagination.total);
       setTotalPages(result.pagination.totalPages);
+
+      // 加载所有用户的会员信息
+      await loadMembershipInfo(result.items);
     } catch (error) {
       toast.error("获取用户列表失败", {
-        description: "请稍后再试或联系管理员"
+        description: "请稍后再试或联系管理员",
       });
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 加载会员信息
+  const loadMembershipInfo = async (userList: User[]) => {
+    try {
+      const membershipsData: Record<string, UserMembership> = {};
+
+      // 对每个用户并行请求会员信息
+      const membershipPromises = userList.map(async (user) => {
+        if (user._id) {
+          const membership = await membershipBusiness.getMembershipByUserId(
+            user._id
+          );
+          if (membership) {
+            membershipsData[user._id] = membership;
+          }
+        }
+      });
+
+      await Promise.all(membershipPromises);
+      setMemberships(membershipsData);
+    } catch (error) {
+      console.error("获取会员信息失败:", error);
     }
   };
 
@@ -124,12 +158,12 @@ export default function UserManagement() {
     try {
       await userBusiness.deleteUser(userId);
       toast.success("删除成功", {
-        description: "用户已被成功删除"
+        description: "用户已被成功删除",
       });
       loadUsers();
     } catch (error) {
       toast.error("删除失败", {
-        description: "无法删除用户，请稍后再试"
+        description: "无法删除用户，请稍后再试",
       });
       console.error(error);
     }
@@ -149,20 +183,86 @@ export default function UserManagement() {
       const userId = currentUser._id;
       await userBusiness.changeUserStatus(userId, newStatus);
       toast.success("状态更新成功", {
-        description: "用户状态已成功更新"
+        description: "用户状态已成功更新",
       });
       setShowStatusDialog(false);
       loadUsers();
     } catch (error) {
       toast.error("状态更新失败", {
-        description: "无法更新用户状态，请稍后再试"
+        description: "无法更新用户状态，请稍后再试",
       });
       console.error(error);
     }
   };
 
+  // 设置/取消管理员权限
+  const openAdminDialog = (userId: string, isCurrentlyAdmin: boolean) => {
+    setSelectedUserId(userId);
+    setIsSettingAdmin(!isCurrentlyAdmin); // 如果当前是管理员，则操作为取消管理员
+    setShowAdminDialog(true);
+  };
+
+  const handleAdminChange = async () => {
+    if (!selectedUserId) return;
+
+    setLoading(true);
+    try {
+      const user = users.find((u) => u._id === selectedUserId);
+      if (!user) return;
+
+      const membership = memberships[selectedUserId];
+      const now = new Date();
+      let endDate = new Date();
+      endDate.setFullYear(now.getFullYear() + 10); // 默认设置10年有效期
+
+      if (membership) {
+        // 如果已有会员信息，保留原有到期日期
+        if (new Date(membership.endDate) > now) {
+          endDate = new Date(membership.endDate);
+        }
+      }
+
+      // 设置新的会员级别
+      const newLevel = isSettingAdmin
+        ? MembershipLevel.ADMIN
+        : MembershipLevel.MEMBER;
+
+      // 确保userId是字符串且有值
+      if (!user._id) {
+        throw new Error("用户ID无效");
+      }
+
+      // 打印出提交的完整数据，检查userId是否正确
+      const membershipData = {
+        userId: user._id.toString(), // 确保是字符串
+        level: newLevel,
+        startDate: now,
+        endDate: endDate,
+      };
+
+      console.log("提交会员数据:", membershipData);
+
+      await membershipBusiness.createOrUpdateMembership(membershipData);
+
+      // 刷新会员信息
+      await loadUsers();
+
+      toast.success(isSettingAdmin ? "已成功设为管理员" : "已取消管理员权限");
+      setShowAdminDialog(false);
+    } catch (error) {
+      toast.error("操作失败", {
+        description: "无法更改管理员权限，请稍后再试",
+      });
+      console.error("错误详情:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 获取状态标签变体
-  const getStatusVariant = (status: UserStatus): "default" | "destructive" | "outline" | "secondary" => {
+  const getStatusVariant = (
+    status: UserStatus
+  ): "default" | "destructive" | "outline" | "secondary" => {
     switch (status) {
       case UserStatus.ACTIVE:
         return "secondary";
@@ -177,14 +277,57 @@ export default function UserManagement() {
     }
   };
 
+  // 获取会员信息展示
+  const getMembershipInfo = (userId: string) => {
+    const membership = memberships[userId];
+    if (!membership) {
+      return <span className="text-gray-400">非会员</span>;
+    }
+
+    if (membership.level === MembershipLevel.FREE) {
+      return <span className="text-gray-400">免费用户</span>;
+    }
+
+    // 检查会员是否有效
+    const now = new Date();
+    const endDate = new Date(membership.endDate);
+    const isActive = endDate > now;
+
+    if (!isActive) {
+      return <span className="text-gray-400">已过期</span>;
+    }
+
+    // 格式化到期日期
+    const formattedDate = endDate.toLocaleDateString();
+
+    // 管理员和普通会员统一只显示会员信息和到期日期
+    return (
+      <div>
+        <Badge
+          variant="outline"
+          className="bg-blue-100 text-blue-800 border-blue-300"
+        >
+          会员
+        </Badge>
+        <div className="text-xs mt-1">到期: {formattedDate}</div>
+      </div>
+    );
+  };
+
+  // 判断用户是否为管理员
+  const isAdmin = (userId: string) => {
+    const membership = memberships[userId];
+    return membership && membership.level === MembershipLevel.ADMIN;
+  };
+
   // 生成分页项
   const renderPaginationItems = () => {
     const items = [];
     const maxVisible = 5; // 最多显示5个页码
-    
+
     let startPage = Math.max(1, page - Math.floor(maxVisible / 2));
     const endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    
+
     if (endPage - startPage + 1 < maxVisible) {
       startPage = Math.max(1, endPage - maxVisible + 1);
     }
@@ -196,7 +339,7 @@ export default function UserManagement() {
           <PaginationLink onClick={() => setPage(1)}>1</PaginationLink>
         </PaginationItem>
       );
-      
+
       if (startPage > 2) {
         items.push(
           <PaginationItem key="ellipsis-start">
@@ -210,10 +353,7 @@ export default function UserManagement() {
     for (let i = startPage; i <= endPage; i++) {
       items.push(
         <PaginationItem key={i}>
-          <PaginationLink 
-            isActive={page === i} 
-            onClick={() => setPage(i)}
-          >
+          <PaginationLink isActive={page === i} onClick={() => setPage(i)}>
             {i}
           </PaginationLink>
         </PaginationItem>
@@ -229,7 +369,7 @@ export default function UserManagement() {
           </PaginationItem>
         );
       }
-      
+
       items.push(
         <PaginationItem key="last">
           <PaginationLink onClick={() => setPage(totalPages)}>
@@ -268,11 +408,14 @@ export default function UserManagement() {
                 placeholder="搜索用户名、邮箱或电话"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="pl-8"
               />
             </div>
-            <Select value={status} onValueChange={(value: UserStatus | 'all') => setStatus(value)}>
+            <Select
+              value={status}
+              onValueChange={(value: UserStatus | "all") => setStatus(value)}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="选择状态" />
               </SelectTrigger>
@@ -296,6 +439,7 @@ export default function UserManagement() {
                   <TableHead>邮箱</TableHead>
                   <TableHead>电话</TableHead>
                   <TableHead>会员</TableHead>
+                  <TableHead>管理员</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead>注册时间</TableHead>
                   <TableHead className="text-right">操作</TableHead>
@@ -321,17 +465,48 @@ export default function UserManagement() {
                         <div className="flex items-center">
                           <Avatar className="h-8 w-8 mr-2">
                             <AvatarImage src={user.avatar || undefined} />
-                            <AvatarFallback>{getInitials(user.nickname || user.username)}</AvatarFallback>
+                            <AvatarFallback>
+                              {getInitials(user.nickname || user.username)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{user.nickname || user.username}</div>
-                            <div className="text-xs text-muted-foreground">{user.username}</div>
+                            <div className="font-medium">
+                              {user.nickname || user.username}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {user.username}
+                            </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>{user.email || "-"}</TableCell>
                       <TableCell>{user.phone || "-"}</TableCell>
-                      
+                      <TableCell>{getMembershipInfo(user._id || "")}</TableCell>
+                      <TableCell>
+                        {isAdmin(user._id || "") ? (
+                          <Badge
+                            variant="secondary"
+                            className="bg-yellow-100 text-yellow-800 border-yellow-300"
+                          >
+                            是
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-400">否</span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-2"
+                          onClick={() =>
+                            openAdminDialog(
+                              user._id || "",
+                              isAdmin(user._id || "")
+                            )
+                          }
+                        >
+                          {isAdmin(user._id || "") ? "取消" : "设置"}
+                        </Button>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(user.status)}>
                           {user.status}
@@ -355,26 +530,37 @@ export default function UserManagement() {
                                 <Edit className="mr-2 h-4 w-4" /> 编辑
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openStatusDialog(user)}>
+                            <DropdownMenuItem
+                              onClick={() => openStatusDialog(user)}
+                            >
                               修改状态
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                                <DropdownMenuItem
+                                  onSelect={(e) => e.preventDefault()}
+                                  className="text-destructive"
+                                >
                                   删除用户
                                 </DropdownMenuItem>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>确定要删除此用户吗？</AlertDialogTitle>
+                                  <AlertDialogTitle>
+                                    确定要删除此用户吗？
+                                  </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     删除后将无法恢复，用户数据将被标记为已删除状态。
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>取消</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(user._id?.toString() || "")}>
+                                  <AlertDialogAction
+                                    onClick={() =>
+                                      handleDelete(user._id?.toString() || "")
+                                    }
+                                  >
                                     确认删除
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -387,17 +573,17 @@ export default function UserManagement() {
                   ))
                 )}
               </TableBody>
-              <TableCaption>
-                共 {total} 条记录
-              </TableCaption>
+              <TableCaption>共 {total} 条记录</TableCaption>
             </Table>
           </div>
 
           {/* 分页 */}
           <div className="mt-4 flex justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">每页显示:</span>
-              <Select value={limit.toString()} onValueChange={(value) => setLimit(parseInt(value))}>
+              <Select
+                value={limit.toString()}
+                onValueChange={(value) => setLimit(parseInt(value))}
+              >
                 <SelectTrigger className="w-[80px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -410,13 +596,15 @@ export default function UserManagement() {
             </div>
             <Pagination>
               <PaginationContent>
-                <PaginationPrevious 
+                <PaginationPrevious
                   onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   aria-disabled={page === 1}
                 />
                 {renderPaginationItems()}
-                <PaginationNext 
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                <PaginationNext
+                  onClick={() =>
+                    setPage((prev) => Math.min(totalPages, prev + 1))
+                  }
                   aria-disabled={page === totalPages}
                 />
               </PaginationContent>
@@ -452,7 +640,10 @@ export default function UserManagement() {
               <Label htmlFor="new-status" className="text-right">
                 新状态
               </Label>
-              <Select value={newStatus} onValueChange={(value: UserStatus) => setNewStatus(value)}>
+              <Select
+                value={newStatus}
+                onValueChange={(value: UserStatus) => setNewStatus(value)}
+              >
                 <SelectTrigger className="col-span-3" id="new-status">
                   <SelectValue />
                 </SelectTrigger>
@@ -465,12 +656,48 @@ export default function UserManagement() {
               </Select>
             </div>
           </div>
-          
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowStatusDialog(false)}
+            >
               取消
             </Button>
             <Button onClick={handleStatusChange}>确认修改</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 设置/取消管理员的弹窗 */}
+      <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isSettingAdmin ? "设置为管理员" : "取消管理员权限"}
+            </DialogTitle>
+            <DialogDescription>
+              {isSettingAdmin
+                ? "确定要将该用户设置为系统管理员吗？管理员拥有所有系统权限。"
+                : "确定要取消该用户的管理员权限吗？"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAdminDialog(false)}
+              disabled={loading}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleAdminChange}
+              disabled={loading}
+              variant={isSettingAdmin ? "default" : "destructive"}
+            >
+              {loading ? "处理中..." : isSettingAdmin ? "确认设置" : "确认取消"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
