@@ -1,15 +1,15 @@
 import { NextRequest } from 'next/server';
 import { UserModel } from '@/model/user';
-import { ApiErrors, withErrorHandler, paginatedResponse } from '@/utils/api-helpers';
+import { ApiErrors, withErrorHandler, paginatedResponse, createPagination, createApiParams } from '@/utils/api-helpers';
 
 /**
  * 获取所有用户列表
  */
 export const GET = withErrorHandler(async (req: NextRequest) => {
   try {
-    const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const apiParams = createApiParams(req);
+    const page = apiParams.getNumber('page') ?? 1;
+    const limit = apiParams.getNumber('limit') ?? 10;
     const skip = (page - 1) * limit;
 
     // 参数验证
@@ -28,15 +28,11 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
     const total = await UserModel.countDocuments();
 
+    const paginationInfo = createPagination(page, limit, total);
+
     return paginatedResponse(
       users,
-      {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: page < Math.ceil(total / limit)
-      },
+      paginationInfo,
       '获取用户列表成功'
     );
   } catch (error) {

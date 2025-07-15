@@ -207,45 +207,6 @@ export function paginatedResponse<T>(
 }
 
 /**
- * 参数验证辅助函数
- * @param params 要验证的参数对象
- * @param requiredFields 必填字段数组
- * @throws ApiError 当缺少必填字段时抛出错误
- */
-export function validateRequiredParams(
-  params: Record<string, any>,
-  requiredFields: string[]
-): void {
-  const missingFields = requiredFields.filter(field =>
-    params[field] === undefined || params[field] === null || params[field] === ''
-  );
-
-  if (missingFields.length > 0) {
-    throw ApiErrors.MISSING_PARAMS(`缺少必要参数: ${missingFields.join(', ')}`);
-  }
-}
-
-/**
- * 邮箱格式验证
- * @param email 邮箱地址
- * @returns 是否为有效邮箱格式
- */
-export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-/**
- * 手机号格式验证（中国大陆）
- * @param phone 手机号
- * @returns 是否为有效手机号格式
- */
-export function validatePhone(phone: string): boolean {
-  const phoneRegex = /^1[3-9]\d{9}$/;
-  return phoneRegex.test(phone);
-}
-
-/**
  * 创建分页信息
  * @param page 当前页码
  * @param limit 每页条数
@@ -263,4 +224,162 @@ export function createPagination(page: number, limit: number, total: number) {
     totalPages,
     hasMore
   };
+} 
+
+
+
+// 请求参数处理工具
+
+/**
+ * 从 URL 搜索参数中提取参数
+ */
+export class ApiParams {
+  private searchParams: URLSearchParams;
+
+  constructor(request: Request) {
+    const url = new URL(request.url);
+    this.searchParams = url.searchParams;
+  }
+
+  /**
+   * 获取字符串参数
+   */
+  getString(key: string, defaultValue?: string): string | undefined {
+    return this.searchParams.get(key) || defaultValue;
+  }
+
+  /**
+   * 获取必需的字符串参数
+   */
+  getRequiredString(key: string): string {
+    const value = this.searchParams.get(key);
+    if (!value) {
+      throw new Error(`缺少必需参数: ${key}`);
+    }
+    return value;
+  }
+
+  /**
+   * 获取数字参数
+   */
+  getNumber(key: string, defaultValue?: number): number | undefined {
+    const value = this.searchParams.get(key);
+    if (!value) return defaultValue;
+    const num = parseInt(value);
+    if (isNaN(num)) {
+      throw new Error(`参数 ${key} 必须是数字`);
+    }
+    return num;
+  }
+
+  /**
+   * 获取必需的数字参数
+   */
+  getRequiredNumber(key: string): number {
+    const value = this.getNumber(key);
+    if (value === undefined) {
+      throw new Error(`缺少必需参数: ${key}`);
+    }
+    return value;
+  }
+
+  /**
+   * 获取布尔参数
+   */
+  getBoolean(key: string, defaultValue?: boolean): boolean | undefined {
+    const value = this.searchParams.get(key);
+    if (!value) return defaultValue;
+    return value.toLowerCase() === 'true';
+  }
+
+  /**
+   * 获取分页参数
+   */
+  getPagination(defaultPage = 1, defaultLimit = 20, defaultTotal = 0, defaultHasMore = false) {
+    return {
+      page: this.getNumber('page', defaultPage)!,
+      limit: this.getNumber('limit', defaultLimit)!,
+      total: this.getNumber('total', defaultTotal)!,
+      hasMore: this.getBoolean('hasMore', defaultHasMore)!
+    };
+  }
+}
+
+/**
+ * 请求体数据验证工具
+ */
+export class RequestValidator {
+  /**
+   * 验证必需字段
+   */
+  static validateRequired<T extends Record<string, any>>(
+    data: T,
+    requiredFields: (keyof T)[]
+  ): void {
+    const missingFields = requiredFields.filter(
+      field => data[field] === undefined || data[field] === null || data[field] === ''
+    );
+
+    if (missingFields.length > 0) {
+      throw new Error(`缺少必需字段: ${missingFields.join(', ')}`);
+    }
+  }
+
+  /**
+   * 验证数字字段
+   */
+  static validateNumbers<T extends Record<string, any>>(
+    data: T,
+    numberFields: (keyof T)[]
+  ): void {
+    numberFields.forEach(field => {
+      const value = data[field];
+      if (value !== undefined && value !== null && isNaN(Number(value))) {
+        throw new Error(`字段 ${String(field)} 必须是数字`);
+      }
+    });
+  }
+
+  /**
+   * 清理数据（移除空值和无效字段）
+   */
+  static sanitize<T extends Record<string, any>>(
+    data: T,
+    allowedFields?: (keyof T)[]
+  ): Partial<T> {
+    const sanitized: Partial<T> = {};
+
+    Object.keys(data).forEach(key => {
+      // 如果指定了允许的字段，只保留这些字段
+      if (allowedFields && !allowedFields.includes(key as keyof T)) {
+        return;
+      }
+
+      const value = data[key];
+      // 只保留非空值
+      if (value !== undefined && value !== null && value !== '') {
+        sanitized[key as keyof T] = value;
+      }
+    });
+
+    return sanitized;
+  }
+}
+
+/**
+ * 创建 API 参数解析器
+ */
+export function createApiParams(request: Request): ApiParams {
+  return new ApiParams(request);
+}
+
+/**
+ * 解析请求体数据
+ */
+export async function parseRequestBody<T = any>(request: Request): Promise<T> {
+  try {
+    return await request.json();
+  } catch (error) {
+    throw new Error(`无效的请求体格式: ${error}`);
+  }
 } 

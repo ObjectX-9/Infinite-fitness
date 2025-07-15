@@ -2,17 +2,18 @@ import { NextRequest } from 'next/server';
 import { UserModel } from '@/model/user';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { ApiErrors, successResponse, withErrorHandler, validateRequiredParams } from '@/utils/api-helpers';
+import { ApiErrors, successResponse, withErrorHandler, parseRequestBody, RequestValidator } from '@/utils/api-helpers';
 
 /**
  * 用户登录
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
   // 参数验证
-  const body = await req.json();
-  validateRequiredParams(body, ['username', 'password']);
+  const useInfo = await parseRequestBody(req);
+
+  RequestValidator.validateRequired(useInfo, ['username', 'password']);
   
-  const { username, password } = body;
+  const { username, password } = useInfo;
 
   // 查找用户
   const user = await UserModel.findOne({ username });

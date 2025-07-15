@@ -2,17 +2,17 @@ import { NextRequest } from 'next/server';
 import { UserModel } from '@/model/user';
 import { UserStatus } from '@/model/user/type';
 import bcrypt from 'bcryptjs';
-import { ApiErrors, successResponse, withErrorHandler, validateRequiredParams } from '@/utils/api-helpers';
+import { ApiErrors, parseRequestBody, RequestValidator, successResponse, withErrorHandler } from '@/utils/api-helpers';
 
 /**
  * 用户注册
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
   // 参数验证
-  const body = await req.json();
-  validateRequiredParams(body, ['username', 'password']);
+  const useInfo = await parseRequestBody(req);
+  RequestValidator.validateRequired(useInfo, ['username', 'password']);
   
-  const { username, password, email, phone, nickname } = body;
+  const { username, password, email, phone, nickname } = useInfo;
 
   // 检查用户名是否已存在
   const existingUser = await UserModel.findOne({ username });
