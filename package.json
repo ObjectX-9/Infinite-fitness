@@ -8,12 +8,21 @@
     "start": "next start",
     "lint": "next lint",
     "prepare": "husky",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "commit": "git-cz"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-customizable"
+    }
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
+    "*.{ts,tsx}": [
       "eslint --fix",
       "npm run type-check"
+    ],
+    "*.{js,jsx}": [
+      "eslint --fix"
     ]
   },
   "dependencies": {
@@ -51,6 +60,8 @@
     "zod": "^4.0.5"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
@@ -60,7 +71,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "commitizen": "^4.3.1",
     "css-loader": "^7.1.2",
+    "cz-conventional-changelog": "^3.3.0",
+    "cz-customizable": "^7.4.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
     "husky": "^9.1.7",
