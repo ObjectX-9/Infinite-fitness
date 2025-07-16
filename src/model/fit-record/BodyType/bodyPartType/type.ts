@@ -18,11 +18,11 @@ export interface BodyPartType {
   /**
    * 创建时间
    */
-  createdAt: string;
+  createdAt: Date;
   /**
    * 更新时间
    */
-  updatedAt: string;
+  updatedAt: Date;
   /**
    * 是否为自定义部位
    */

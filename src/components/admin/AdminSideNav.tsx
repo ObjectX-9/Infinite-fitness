@@ -17,7 +17,7 @@ import { Button } from "../ui/button";
 const navItems = [
   { name: "控制台", path: "/admin", icon: Home },
   { name: "用户管理", path: "/admin/users", icon: Users },
-  { name: "健身记录", path: "/admin/fit-record", icon: Calendar },
+  { name: "身体部位", path: "/admin/bodyParts", icon: Calendar },
   { name: "健身工具", path: "/admin/fit-tool", icon: BarChart },
   { name: "健身教程", path: "/admin/fit-tech", icon: BookOpen },
   { name: "健身商城", path: "/admin/fit-mall", icon: ShoppingBag },
