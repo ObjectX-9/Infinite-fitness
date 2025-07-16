@@ -17,19 +17,16 @@ import { Search } from "lucide-react";
  */
 interface UserSearchBarProps {
   keyword: string;
-  setKeyword: (value: string) => void;
   status: UserStatus | "all";
-  setStatus: (value: UserStatus | "all") => void;
-  onSearch: () => void;
+  onSearch: (keyword: string, status: UserStatus | "all") => void;
 }
 
 export function UserSearchBar({
   keyword,
-  setKeyword,
   status,
-  setStatus,
   onSearch,
 }: UserSearchBarProps) {
+
   return (
     <div className="flex gap-4 mb-6">
       <div className="relative flex-1">
@@ -37,14 +34,14 @@ export function UserSearchBar({
         <Input
           placeholder="搜索用户名、邮箱或电话"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && onSearch()}
+          onChange={(e) => onSearch(e.target.value, status)}
+          onKeyDown={(e) => e.key === "Enter" && onSearch(keyword, status)}
           className="pl-8"
         />
       </div>
       <Select
         value={status}
-        onValueChange={(value: UserStatus | "all") => setStatus(value)}
+        onValueChange={(value: UserStatus | "all") => onSearch(keyword, value)}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="选择状态" />
@@ -57,7 +54,7 @@ export function UserSearchBar({
           <SelectItem value={UserStatus.DELETED}>已删除</SelectItem>
         </SelectContent>
       </Select>
-      <Button onClick={onSearch}>搜索</Button>
+      <Button onClick={() => onSearch(keyword, status)}>搜索</Button>
     </div>
   );
 } 

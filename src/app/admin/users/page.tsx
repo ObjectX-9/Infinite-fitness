@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { userBusiness } from "@/app/business/user";
 import { membershipBusiness } from "@/app/business/membership";
 import { User, UserStatus } from "@/model/user/type";
@@ -27,6 +27,7 @@ import { AdminRoleDialog } from "@/components/admin/users/AdminRoleDialog";
  */
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [memberships, setMemberships] = useState<
     Record<string, UserMembership>
   >({});
@@ -56,6 +57,7 @@ export default function UserManagement() {
 
       const result = await userBusiness.getUserList(params);
       setUsers(result.items);
+      setFilteredUsers(result.items);
       setTotal(result.pagination.total);
       setTotalPages(result.pagination.totalPages);
 
@@ -98,17 +100,43 @@ export default function UserManagement() {
     }
   };
 
-  // 首次加载和参数变化时重新获取数据
-  useEffect(() => {
-    loadUsers();
-  }, [page, limit, status]);
+  const filterUserByKeyword = (users: User[], keyword: string) => {
+    if (!keyword) {
+      return users;
+    } else {
+      return users.filter((user) => {
+        return user.username?.includes(keyword)
+          || user.email?.includes(keyword)
+          || user.phone?.includes(keyword)
+      });
+    }
+  };
+
+  const filterUserByStatus = (users: User[], status: UserStatus | "all") => {
+    if (status === "all") {
+      return users;
+    } else {
+      return users.filter((user) => {
+        return user.status === status;
+      });
+    }
+  };
+
+  const dealFilterUser = (keyword: string, status: UserStatus | "all") => {
+    const filteredUsersByKeyword = filterUserByKeyword(users, keyword);
+    const filteredUsersByStatus = filterUserByStatus(filteredUsersByKeyword, status);
+    setFilteredUsers(filteredUsersByStatus);
+    setTotal(filteredUsersByStatus.length);
+    setTotalPages(Math.ceil(filteredUsersByStatus.length / limit));
+  };
 
   /**
    * 搜索用户
    */
-  const handleSearch = () => {
-    setPage(1); // 搜索时重置页码
-    loadUsers();
+  const handleSearch = (keyword: string, status: UserStatus | "all") => {
+    setKeyword(keyword);
+    setStatus(status);
+    dealFilterUser(keyword, status);
   };
 
   /**
@@ -304,6 +332,10 @@ export default function UserManagement() {
     return membership && membership.level === MembershipLevel.ADMIN;
   };
 
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
   return (
     <div className="container mx-auto py-6">
       <Card>
@@ -320,15 +352,13 @@ export default function UserManagement() {
           {/* 搜索区域 */}
           <UserSearchBar
             keyword={keyword}
-            setKeyword={setKeyword}
             status={status}
-            setStatus={setStatus}
             onSearch={handleSearch}
           />
 
           {/* 用户表格 */}
           <UserTable
-            users={users}
+            users={filteredUsers}
             loading={loading}
             total={total}
             getStatusVariant={getStatusVariant}
