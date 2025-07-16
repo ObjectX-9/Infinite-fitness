@@ -1,12 +1,11 @@
 import mongoose, { Schema } from "mongoose";
-import { BodyPartType, EBodyPartTypeCategory } from "./type";
+import { BodyPartType } from "./type";
 
 // 身体部位类型Schema
 const bodyPartTypeSchema = new Schema<BodyPartType>({
   name: {
     type: String,
     required: true,
-    enum: Object.values(EBodyPartTypeCategory),
   },
   description: { type: String, required: true },
   createdAt: { type: Date, required: true },
@@ -14,6 +13,7 @@ const bodyPartTypeSchema = new Schema<BodyPartType>({
   isCustom: { type: Boolean, default: false },
   userId: { type: String },
   imageUrls: { type: [String], default: [] },
+  videoUrls: { type: [String], default: [] },
   order: { type: Number, required: true },
 });
 

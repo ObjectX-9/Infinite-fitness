@@ -1,4 +1,4 @@
-import { request } from '@/utils/request';
+import { request } from "@/utils/request";
 
 /**
  * 上传文件接口响应类型
@@ -11,58 +11,48 @@ export interface UploadResponse {
 /**
  * 上传文件
  * @param file 文件对象
- * @param type 存储目录类型
+ * @param path 文件存储路径
+ * @param fileTypeCheck 可选，文件类型检查（逗号分隔的列表）
  * @returns 上传结果，包含URL和文件名
  */
-export async function uploadFile(file: File, type: string = 'common'): Promise<UploadResponse> {
+async function uploadFile(
+  file: File,
+  path: string,
+  fileTypeCheck?: string
+): Promise<UploadResponse> {
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('type', type);
+  formData.append("file", file);
+  formData.append("path", path);
 
-  const response = await request.post<UploadResponse>('upload', formData);
+  if (fileTypeCheck) {
+    formData.append("fileTypeCheck", fileTypeCheck);
+  }
+
+  const response = await request.post<UploadResponse>("upload", formData);
 
   return response.data;
 }
 
-/**
- * 删除文件
- * @param filename 文件名（完整路径）
- * @returns 删除结果
- */
-export async function deleteFile(filename: string): Promise<{ success: boolean }> {
-  const response = await request.delete<{ success: boolean }>(`upload`, {
-    params: { filename }
-  });
+class UploadBusiness {
+  /**
+   * 上传身体部位图片
+   * @param file 文件对象
+   * @param fileTypeCheck 可选，文件类型检查（逗号分隔的列表）
+   * @returns 上传结果，包含URL和文件名
+   */
+  async uploadBodyImage(file: File, fileTypeCheck?: string) {
+    return uploadFile(file, "body-images", fileTypeCheck);
+  }
 
-  return response.data;
+  /**
+   * 上传身体部位视频
+   * @param file 文件对象
+   * @param fileTypeCheck 可选，文件类型检查（逗号分隔的列表）
+   * @returns 上传结果，包含URL和文件名
+   */
+  async uploadBodyVideo(file: File, fileTypeCheck?: string) {
+    return uploadFile(file, "body-videos", fileTypeCheck);
+  }
 }
 
-/**
- * 上传图片文件
- * @param file 图片文件
- * @param type 存储目录类型
- * @returns 上传结果，包含URL和文件名
- */
-export async function uploadImage(file: File, type: string = 'common'): Promise<UploadResponse> {
-  // 验证是否为图片文件
-  if (!file.type.startsWith('image/')) {
-    throw new Error('只能上传图片文件');
-  }
-  
-  return uploadFile(file, type);
-}
-
-/**
- * 上传Markdown文件
- * @param file Markdown文件
- * @param type 存储目录类型
- * @returns 上传结果，包含URL和文件名
- */
-export async function uploadMarkdown(file: File, type: string = 'common'): Promise<UploadResponse> {
-  // 验证是否为Markdown文件
-  if (!(file.type === 'text/markdown' || file.name.endsWith('.md'))) {
-    throw new Error('只能上传Markdown文件');
-  }
-  
-  return uploadFile(file, type);
-} 
+export const uploadBusiness = new UploadBusiness();

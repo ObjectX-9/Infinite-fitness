@@ -10,7 +10,7 @@ export interface BodyPartType {
   /**
    * 身体部位类型的名称
    */
-  name: EBodyPartTypeCategory;
+  name: EBodyPartTypeCategory | string;
   /**
    * 身体部位类型的描述
    */
@@ -37,6 +37,11 @@ export interface BodyPartType {
    * 图片URLs
    */
   imageUrls: string[];
+
+  /**
+   * 视频URLs
+   */
+  videoUrls: string[];
 
   /**
    * 排序
@@ -70,7 +75,11 @@ export enum EBodyPartTypeCategory {
    */
   HIPS = "hips",
   /**
-   * 其他
+   * 颈部
    */
-  OTHER = "other",
+  NECK = "neck",
+  /**
+   * 肩部
+   */
+  SHOULDER = "shoulder",
 }

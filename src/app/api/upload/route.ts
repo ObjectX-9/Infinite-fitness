@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest } from "next/server";
 import OSS from "ali-oss";
 import { v4 as uuidv4 } from "uuid";
@@ -9,35 +8,56 @@ import {
   createApiParams,
 } from "@/utils/api-helpers";
 
-// 检查所有必需的环境变量
-const requiredEnvVars = {
-  region: process.env.OSS_REGION || process.env.NEXT_PUBLIC_OSS_REGION,
-  accessKeyId:
-    process.env.OSS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_OSS_ACCESS_KEY_ID,
-  accessKeySecret:
-    process.env.OSS_ACCESS_KEY_SECRET ||
-    process.env.NEXT_PUBLIC_OSS_ACCESS_KEY_SECRET,
-  bucket: process.env.OSS_BUCKET || process.env.NEXT_PUBLIC_OSS_BUCKET,
+/**
+ * 初始化OSS客户端
+ * @returns OSS实例或null(如果配置不完整)
+ */
+let ossClientInstance: OSS | null = null;
+
+const initOss = (): OSS | null => {
+  // 如果已经初始化过，直接返回缓存的实例
+  if (ossClientInstance) {
+    return ossClientInstance;
+  }
+
+  const requiredEnvVars = [
+    { key: "region", value: process.env.OSS_REGION },
+    { key: "accessKeyId", value: process.env.OSS_ACCESS_KEY_ID },
+    { key: "accessKeySecret", value: process.env.OSS_ACCESS_KEY_SECRET },
+    { key: "bucket", value: process.env.OSS_BUCKET },
+  ];
+
+  // 检查环境变量
+  const missingVars = requiredEnvVars
+    .filter((item) => !item.value)
+    .map((item) => item.key);
+
+  if (missingVars.length > 0) {
+    console.error(
+      `初始化OSS失败：缺少必要的环境变量 [${missingVars.join(", ")}]`
+    );
+    return null;
+  }
+
+  try {
+    ossClientInstance = new OSS({
+      region: process.env.OSS_REGION!,
+      accessKeyId: process.env.OSS_ACCESS_KEY_ID!,
+      accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET!,
+      bucket: process.env.OSS_BUCKET!,
+    });
+    return ossClientInstance;
+  } catch (error) {
+    console.error("初始化OSS客户端失败:", error);
+    return null;
+  }
 };
 
-// 验证环境变量
-const missingEnvVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
-  .map(([key]) => key);
+const client = initOss();
 
-if (missingEnvVars.length > 0) {
-  console.error(
-    `缺少必要的环境变量: ${missingEnvVars.join(", ")}`
-  );
+if (!client) {
+  throw new Error("OSS 客户端初始化失败");
 }
-
-// 创建OSS客户端
-const client = new OSS({
-  region: requiredEnvVars.region!,
-  accessKeyId: requiredEnvVars.accessKeyId!,
-  accessKeySecret: requiredEnvVars.accessKeySecret!,
-  bucket: requiredEnvVars.bucket!,
-});
 
 // 重试配置
 const RETRY_CONFIG = {
@@ -90,20 +110,29 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const type = formData.get("type") as string || "common"; // 默认为 common 目录
+    const customPath = formData.get("path") as string;
+    const fileTypeCheck = formData.get("fileTypeCheck") as string;
 
     if (!file) {
       throw ApiErrors.BAD_REQUEST("未提供文件");
     }
 
-    // 检查文件类型
-    const allowedTypes = ["text/markdown", "text/plain", "image/"];
-    const isAllowedType = allowedTypes.some(allowedType => 
-      file.type.startsWith(allowedType) || file.name.endsWith(".md")
-    );
+    if (!customPath) {
+      throw ApiErrors.BAD_REQUEST("未提供文件路径");
+    }
 
-    if (!isAllowedType) {
-      throw ApiErrors.BAD_REQUEST("仅允许上传Markdown和图片文件");
+    // 如果需要检查文件类型
+    if (fileTypeCheck) {
+      const allowedTypes = fileTypeCheck.split(",");
+      const isAllowedType = allowedTypes.some(
+        (allowedType) =>
+          file.type.startsWith(allowedType.trim()) ||
+          file.name.toLowerCase().endsWith(`.${allowedType.trim()}`)
+      );
+
+      if (!isAllowedType) {
+        throw ApiErrors.BAD_REQUEST(`文件类型不允许，仅支持: ${fileTypeCheck}`);
+      }
     }
 
     // 获取文件扩展名
@@ -112,18 +141,17 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
       throw ApiErrors.BAD_REQUEST("无效的文件扩展名");
     }
 
-    // 根据文件类型决定存储路径
-    const basePath = file.type.startsWith("image/") ? "images" : "articles";
-    const filename = `${basePath}/${type}/${uuidv4()}.${extension}`;
+    // 清理路径并构建文件名
+    const cleanPath = customPath.replace(/^\/+|\/+$/g, ""); // 移除开头和结尾的斜杠
+    const filename = `${cleanPath}/${uuidv4()}.${extension}`;
 
     // 读取文件内容
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 上传文件到OSS
-    const result = await uploadWithRetry(client, filename, buffer);
+    await uploadWithRetry(client, filename, buffer);
 
     // 构建完整的URL
-    const url = `https://${requiredEnvVars.bucket}.${requiredEnvVars.region}.aliyuncs.com/${filename}`;
+    const url = `https://${process.env.OSS_BUCKET}.${process.env.OSS_REGION}.aliyuncs.com/${filename}`;
 
     return successResponse({ url, filename }, "文件上传成功");
   } catch (error) {
@@ -146,4 +174,4 @@ export const DELETE = unifiedInterfaceProcess(async (req: NextRequest) => {
     console.error("删除文件错误:", error);
     throw error;
   }
-}); 
+});

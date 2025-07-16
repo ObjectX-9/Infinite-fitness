@@ -1,4 +1,7 @@
-import { BodyPartType, EBodyPartTypeCategory } from "@/model/fit-record/BodyType/bodyPartType/type";
+import {
+  BodyPartType,
+  EBodyPartTypeCategory,
+} from "@/model/fit-record/BodyType/bodyPartType/type";
 import { request } from "@/utils/request";
 
 interface BodyPartResponse {
@@ -27,16 +30,23 @@ class BodyPartBusiness {
     if (userId) {
       params.userId = userId;
     }
-    
-    const response = await request.get<BodyPartResponse>(`bodyPart/${id}`, { params });
+
+    const response = await request.get<BodyPartResponse>(`bodyPart/${id}`, {
+      params,
+    });
     return response.data.bodyPart;
   }
 
   /**
    * 创建身体部位类型
    */
-  async createBodyPart(bodyPartData: Partial<BodyPartType>): Promise<BodyPartType> {
-    const response = await request.post<BodyPartResponse>('bodyPart', bodyPartData);
+  async createBodyPart(
+    bodyPartData: Partial<BodyPartType>
+  ): Promise<BodyPartType> {
+    const response = await request.post<BodyPartResponse>(
+      "bodyPart",
+      bodyPartData
+    );
     return response.data.bodyPart;
   }
 
@@ -47,13 +57,10 @@ class BodyPartBusiness {
     id: string,
     updateData: Partial<BodyPartType>
   ): Promise<BodyPartType> {
-    const response = await request.put<BodyPartResponse>(
-      'bodyPart',
-      {
-        id,
-        ...updateData,
-      }
-    );
+    const response = await request.put<BodyPartResponse>("bodyPart", {
+      id,
+      ...updateData,
+    });
     return response.data.bodyPart;
   }
 
@@ -65,22 +72,29 @@ class BodyPartBusiness {
     limit?: number;
     userId?: string;
     category?: EBodyPartTypeCategory;
+    isAdmin?: boolean;
   }): Promise<BodyPartListResponse> {
-    const response = await request.get<BodyPartListResponse>("bodyPart", options);
+    const response = await request.get<BodyPartListResponse>(
+      "bodyPart",
+      options
+    );
     return response.data;
   }
 
   /**
    * 删除身体部位类型
    */
-  async deleteBodyPart(id: string, userId?: string): Promise<{ success: boolean }> {
+  async deleteBodyPart(
+    id: string,
+    userId?: string
+  ): Promise<{ success: boolean }> {
     const params: Record<string, string> = { id };
     if (userId) {
       params.userId = userId;
     }
-    
+
     const response = await request.delete<{ success: boolean }>("bodyPart", {
-      params
+      params,
     });
     return response.data;
   }
@@ -91,7 +105,7 @@ class BodyPartBusiness {
   async getUserCustomBodyParts(userId: string): Promise<BodyPartType[]> {
     const response = await request.get<BodyPartListResponse>("bodyPart", {
       userId,
-      isCustom: true
+      isCustom: true,
     });
     return response.data.items;
   }
@@ -99,29 +113,34 @@ class BodyPartBusiness {
   /**
    * 获取系统预设的身体部位列表（按类别分组）
    */
-  async getSystemBodyPartsByCategory(): Promise<Record<EBodyPartTypeCategory, BodyPartType[]>> {
+  async getSystemBodyPartsByCategory(): Promise<
+    Record<EBodyPartTypeCategory, BodyPartType[]>
+  > {
     const response = await request.get<BodyPartListResponse>("bodyPart", {
       isCustom: false,
-      limit: 100 // 获取足够多的数据
+      limit: 100, // 获取足够多的数据
     });
 
     // 按类别分组
-    const result: Record<EBodyPartTypeCategory, BodyPartType[]> = {} as Record<EBodyPartTypeCategory, BodyPartType[]>;
-    
+    const result: Record<EBodyPartTypeCategory, BodyPartType[]> = {} as Record<
+      EBodyPartTypeCategory,
+      BodyPartType[]
+    >;
+
     // 初始化所有类别
-    Object.values(EBodyPartTypeCategory).forEach(category => {
+    Object.values(EBodyPartTypeCategory).forEach((category) => {
       result[category] = [];
     });
-    
+
     // 分组
-    response.data.items.forEach(item => {
-      if (result[item.name]) {
-        result[item.name].push(item);
+    response.data.items.forEach((item) => {
+      if (result[item.name as EBodyPartTypeCategory]) {
+        result[item.name as EBodyPartTypeCategory].push(item);
       }
     });
-    
+
     return result;
   }
 }
 
-export const bodyPartBusiness = new BodyPartBusiness(); 
+export const bodyPartBusiness = new BodyPartBusiness();

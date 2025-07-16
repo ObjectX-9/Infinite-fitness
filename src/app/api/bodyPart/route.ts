@@ -20,7 +20,7 @@ interface BodyPartQuery {
   id?: string;
   userId?: string;
   isCustom?: boolean;
-  $or?: Array<{userId?: string} | {isCustom: boolean}>;
+  $or?: Array<{ userId?: string } | { isCustom: boolean }>;
 }
 
 /**
@@ -33,17 +33,27 @@ export const GET = unifiedInterfaceProcess(async (req: NextRequest) => {
     const limit = apiParams.getNumber("limit") ?? 10;
     const skip = (page - 1) * limit;
     const userId = apiParams.getString("userId");
+    const isAdmin = apiParams.getBoolean("isAdmin");
 
     // 参数验证
     if (page < 1 || limit < 1) {
       throw ApiErrors.BAD_REQUEST("页码和每页数量必须为大于0的数字");
     }
 
-    console.log("准备查询身体部位类型列表，参数:", { page, limit, skip, userId });
+    console.log("准备查询身体部位类型列表，参数:", {
+      page,
+      limit,
+      skip,
+      userId,
+      isAdmin,
+    });
 
     // 构建查询条件
     const query: BodyPartQuery = {};
-    if (userId) {
+    if (isAdmin) {
+      // 管理员查询所有数据
+      // 不设置任何过滤条件
+    } else if (userId) {
       // 查询系统预设的和用户自定义的
       query.$or = [{ userId }, { isCustom: false }];
     } else {
@@ -62,7 +72,11 @@ export const GET = unifiedInterfaceProcess(async (req: NextRequest) => {
 
     const paginationInfo = createPagination(page, limit, total);
 
-    return paginatedResponse(bodyParts, paginationInfo, "获取身体部位类型列表成功");
+    return paginatedResponse(
+      bodyParts,
+      paginationInfo,
+      "获取身体部位类型列表成功"
+    );
   } catch (error) {
     console.error("获取身体部位类型列表出错:", error);
     throw error;
@@ -83,7 +97,7 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
     const now = new Date();
     bodyPartData.createdAt = now;
     bodyPartData.updatedAt = now;
-    
+
     // 如果是自定义部位，需要设置isCustom为true
     if (bodyPartData.userId) {
       bodyPartData.isCustom = true;

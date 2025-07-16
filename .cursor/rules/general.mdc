@@ -54,6 +54,7 @@ globs:
 - 三方组件库使用 shadcn，先判断 src/components/ui 中有没有需要的组件，如果没有再安装
 - 不允许出现类型问题
 - 尽量减少重复不必要的请求
+- nextjs 中使用 img 组件需要用 Image 组件代替，使用 import Image from "next/image";
 
 ## 项目组织结构
 

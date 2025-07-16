@@ -18,3 +18,6 @@ const userMembershipSchema = new Schema<UserMembership>({
 export const UserMembershipModel =
   mongoose.models.UserMembership ||
   mongoose.model<UserMembership>("UserMembership", userMembershipSchema);
+
+
+
