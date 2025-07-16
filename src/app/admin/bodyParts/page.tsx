@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { bodyPartBusiness } from "@/app/business/bodyPart";
-import { BodyPartType, EBodyPartTypeCategory } from "@/model/fit-record/BodyType/bodyPartType/type";
+import {
+  BodyPartType,
+  EBodyPartTypeCategory,
+} from "@/model/fit-record/BodyType/bodyPartType/type";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -53,18 +56,24 @@ import { MoreHorizontal, Plus, Search } from "lucide-react";
  */
 export default function BodyPartManagement() {
   const [bodyParts, setBodyParts] = useState<BodyPartType[]>([]);
-  const [filteredBodyParts, setFilteredBodyParts] = useState<BodyPartType[]>([]);
+  const [filteredBodyParts, setFilteredBodyParts] = useState<BodyPartType[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState("");
-  const [category, setCategory] = useState<EBodyPartTypeCategory | "all">("all");
+  const [category, setCategory] = useState<EBodyPartTypeCategory | "all">(
+    "all"
+  );
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  
+
   // 创建/编辑对话框状态
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentBodyPart, setCurrentBodyPart] = useState<Partial<BodyPartType>>({});
+  const [currentBodyPart, setCurrentBodyPart] = useState<Partial<BodyPartType>>(
+    {}
+  );
   const [isEditMode, setIsEditMode] = useState(false);
 
   /**
@@ -94,13 +103,18 @@ export default function BodyPartManagement() {
   /**
    * 根据关键词筛选身体部位类型
    */
-  const filterBodyPartsByKeyword = (bodyParts: BodyPartType[], keyword: string) => {
+  const filterBodyPartsByKeyword = (
+    bodyParts: BodyPartType[],
+    keyword: string
+  ) => {
     if (!keyword) {
       return bodyParts;
     } else {
       return bodyParts.filter((bodyPart) => {
-        return bodyPart.name?.includes(keyword)
-          || bodyPart.description?.includes(keyword);
+        return (
+          bodyPart.name?.includes(keyword) ||
+          bodyPart.description?.includes(keyword)
+        );
       });
     }
   };
@@ -108,7 +122,10 @@ export default function BodyPartManagement() {
   /**
    * 根据类别筛选身体部位类型
    */
-  const filterBodyPartsByCategory = (bodyParts: BodyPartType[], category: EBodyPartTypeCategory | "all") => {
+  const filterBodyPartsByCategory = (
+    bodyParts: BodyPartType[],
+    category: EBodyPartTypeCategory | "all"
+  ) => {
     if (category === "all") {
       return bodyParts;
     } else {
@@ -121,9 +138,15 @@ export default function BodyPartManagement() {
   /**
    * 处理筛选
    */
-  const handleFilter = (keyword: string, category: EBodyPartTypeCategory | "all") => {
+  const handleFilter = (
+    keyword: string,
+    category: EBodyPartTypeCategory | "all"
+  ) => {
     const filteredByKeyword = filterBodyPartsByKeyword(bodyParts, keyword);
-    const filteredByCategory = filterBodyPartsByCategory(filteredByKeyword, category);
+    const filteredByCategory = filterBodyPartsByCategory(
+      filteredByKeyword,
+      category
+    );
     setFilteredBodyParts(filteredByCategory);
     setTotal(filteredByCategory.length);
     setTotalPages(Math.ceil(filteredByCategory.length / limit));
@@ -143,7 +166,7 @@ export default function BodyPartManagement() {
     setCurrentBodyPart({
       imageUrls: [],
       order: 0,
-      isCustom: false
+      isCustom: false,
     });
     setIsEditMode(false);
     setIsDialogOpen(true);
@@ -170,7 +193,7 @@ export default function BodyPartManagement() {
 
       if (isEditMode) {
         await bodyPartBusiness.updateBodyPart(
-          currentBodyPart.id!,
+          currentBodyPart._id!,
           currentBodyPart
         );
         toast.success("更新成功", {
@@ -182,7 +205,7 @@ export default function BodyPartManagement() {
           description: "身体部位类型已创建",
         });
       }
-      
+
       setIsDialogOpen(false);
       loadBodyParts();
     } catch (error) {
@@ -200,7 +223,7 @@ export default function BodyPartManagement() {
     if (!confirm("确定要删除这个身体部位类型吗？")) {
       return;
     }
-    
+
     try {
       await bodyPartBusiness.deleteBodyPart(id);
       toast.success("删除成功", {
@@ -275,7 +298,9 @@ export default function BodyPartManagement() {
             />
             <Select
               value={category}
-              onValueChange={(value) => setCategory(value as EBodyPartTypeCategory | "all")}
+              onValueChange={(value) =>
+                setCategory(value as EBodyPartTypeCategory | "all")
+              }
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="选择类别" />
@@ -324,7 +349,7 @@ export default function BodyPartManagement() {
                   </TableRow>
                 ) : (
                   filteredBodyParts.map((bodyPart, index) => (
-                    <TableRow key={bodyPart.id}>
+                    <TableRow key={bodyPart._id}>
                       <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>
                         <div className="font-medium">
@@ -355,11 +380,13 @@ export default function BodyPartManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditDialog(bodyPart)}>
+                            <DropdownMenuItem
+                              onClick={() => openEditDialog(bodyPart)}
+                            >
                               编辑
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleDelete(bodyPart.id)}
+                              onClick={() => handleDelete(bodyPart._id)}
                               className="text-red-600"
                             >
                               删除
@@ -377,9 +404,7 @@ export default function BodyPartManagement() {
           {/* 分页 */}
           <div className="flex items-center justify-between space-x-2 py-4">
             <div className="flex items-center space-x-2">
-              <p className="text-sm text-muted-foreground">
-                每页显示
-              </p>
+              <p className="text-sm text-muted-foreground">每页显示</p>
               <Select
                 value={limit.toString()}
                 onValueChange={(value) => handleLimitChange(Number(value))}
@@ -427,7 +452,9 @@ export default function BodyPartManagement() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{isEditMode ? "编辑身体部位类型" : "添加身体部位类型"}</DialogTitle>
+            <DialogTitle>
+              {isEditMode ? "编辑身体部位类型" : "添加身体部位类型"}
+            </DialogTitle>
             <DialogDescription>
               {isEditMode ? "修改身体部位类型信息" : "创建一个新的身体部位类型"}
             </DialogDescription>
@@ -438,10 +465,10 @@ export default function BodyPartManagement() {
               <div className="col-span-3">
                 <Select
                   value={currentBodyPart.name || ""}
-                  onValueChange={(value) => 
+                  onValueChange={(value) =>
                     setCurrentBodyPart({
                       ...currentBodyPart,
-                      name: value as EBodyPartTypeCategory
+                      name: value as EBodyPartTypeCategory,
                     })
                   }
                 >
@@ -466,7 +493,7 @@ export default function BodyPartManagement() {
                   onChange={(e) =>
                     setCurrentBodyPart({
                       ...currentBodyPart,
-                      description: e.target.value
+                      description: e.target.value,
                     })
                   }
                   placeholder="身体部位类型的描述"
@@ -482,7 +509,7 @@ export default function BodyPartManagement() {
                   onChange={(e) =>
                     setCurrentBodyPart({
                       ...currentBodyPart,
-                      order: Number(e.target.value)
+                      order: Number(e.target.value),
                     })
                   }
                 />
@@ -494,10 +521,10 @@ export default function BodyPartManagement() {
                 <Checkbox
                   id="isCustom"
                   checked={currentBodyPart.isCustom || false}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: boolean) =>
                     setCurrentBodyPart({
                       ...currentBodyPart,
-                      isCustom: checked === true
+                      isCustom: checked === true,
                     })
                   }
                 />
@@ -508,11 +535,13 @@ export default function BodyPartManagement() {
               <label className="text-right">图片URL</label>
               <div className="col-span-3">
                 <Textarea
-                  value={(currentBodyPart.imageUrls || []).join('\n')}
+                  value={(currentBodyPart.imageUrls || []).join("\n")}
                   onChange={(e) =>
                     setCurrentBodyPart({
                       ...currentBodyPart,
-                      imageUrls: e.target.value.split('\n').filter(url => url.trim() !== '')
+                      imageUrls: e.target.value
+                        .split("\n")
+                        .filter((url) => url.trim() !== ""),
                     })
                   }
                   placeholder="每行一个图片URL"
@@ -532,4 +561,4 @@ export default function BodyPartManagement() {
       </Dialog>
     </div>
   );
-} 
+}

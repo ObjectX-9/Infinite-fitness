@@ -6,7 +6,7 @@ export interface BodyPartType {
   /**
    * 身体部位类型的唯一ID
    */
-  id: string;
+  _id: string;
   /**
    * 身体部位类型的名称
    */
@@ -48,30 +48,29 @@ export enum EBodyPartTypeCategory {
   /**
    * 胸部
    */
-  CHEST = 'chest',
+  CHEST = "chest",
   /**
    * 背部
    */
-  BACK = 'back',
+  BACK = "back",
   /**
    * 手臂
    */
-  ARM = 'arm',
+  ARM = "arm",
   /**
    * 腿部
    */
-  LEG = 'leg',
+  LEG = "leg",
   /**
    * 腹部
    */
-  ABDOMEN = 'abdomen',
+  ABDOMEN = "abdomen",
   /**
    * 臀部
    */
-  HIPS = 'hips',
+  HIPS = "hips",
   /**
    * 其他
    */
-  OTHER = 'other',
+  OTHER = "other",
 }
-

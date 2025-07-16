@@ -1,152 +1,149 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
-  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import {
+  Users,
+  BarChart,
+  Calendar,
+  Activity,
+  ShoppingBag,
+  Settings,
+} from "lucide-react";
+import { User } from "@/model/user/type";
 
-export default function AdminDashboard() {
+/**
+ * 管理后台首页组件
+ */
+export default function AdminPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  /**
+   * 获取用户信息
+   */
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error("解析用户数据失败:", error);
+      }
+    }
+  }, []);
+
+  // 功能模块卡片数据
+  const modules = [
+    {
+      title: "用户管理",
+      description: "查看和管理系统用户信息",
+      icon: Users,
+      path: "/admin/users",
+      count: "350+",
+      color: "bg-blue-500",
+    },
+    {
+      title: "身体部位",
+      description: "维护身体部位数据",
+      icon: Calendar,
+      path: "/admin/bodyParts",
+      count: "42",
+      color: "bg-green-500",
+    },
+    {
+      title: "健身工具",
+      description: "管理健身器材和工具",
+      icon: Activity,
+      path: "/admin/fit-tool",
+      count: "120+",
+      color: "bg-purple-500",
+    },
+    {
+      title: "健身教程",
+      description: "发布和维护健身教程内容",
+      icon: BarChart,
+      path: "/admin/fit-tech",
+      count: "85",
+      color: "bg-yellow-500",
+    },
+    {
+      title: "健身商城",
+      description: "管理商城产品和订单",
+      icon: ShoppingBag,
+      path: "/admin/fit-mall",
+      count: "250+",
+      color: "bg-pink-500",
+    },
+    {
+      title: "系统设置",
+      description: "配置系统参数和选项",
+      icon: Settings,
+      path: "/admin/settings",
+      count: "",
+      color: "bg-gray-500",
+    },
+  ];
+
   return (
-    <div className="flex-1 space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总用户数</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,204</div>
-            <p className="text-xs text-muted-foreground">+20.1% 较上月</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">会员数</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">354</div>
-            <p className="text-xs text-muted-foreground">+15.2% 较上月</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">活跃用户</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <rect width="20" height="14" x="2" y="5" rx="2" />
-              <path d="M2 10h20" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">627</div>
-            <p className="text-xs text-muted-foreground">+8.2% 较上周</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总收入</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">¥45,231.89</div>
-            <p className="text-xs text-muted-foreground">+19.5% 较上月</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg p-6 shadow-sm border">
+        <h2 className="text-2xl font-bold mb-2">
+          欢迎回来，{user?.nickname || user?.username || "管理员"}
+        </h2>
+        <p className="text-gray-500">
+          今天是{" "}
+          {new Date().toLocaleDateString("zh-CN", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
       </div>
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">总览</TabsTrigger>
-          <TabsTrigger value="analytics">数据分析</TabsTrigger>
-          <TabsTrigger value="reports">报告</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>系统概览</CardTitle>
-              <CardDescription>查看系统整体运行状况和关键指标</CardDescription>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                统计图表显示区域
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {modules.map((module, index) => (
+          <Card
+            key={index}
+            className="overflow-hidden hover:shadow-md transition-shadow duration-300"
+          >
+            <CardHeader className={`${module.color} text-white`}>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-xl font-bold">
+                  {module.title}
+                </CardTitle>
+                <module.icon size={24} />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="analytics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>数据分析</CardTitle>
-              <CardDescription>查看详细的数据分析报告</CardDescription>
             </CardHeader>
-            <CardContent className="pl-2">
-              <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                数据分析内容
-              </div>
+            <CardContent className="pt-6">
+              <p className="text-gray-600">{module.description}</p>
+              {module.count && (
+                <p className="text-3xl font-bold mt-2">{module.count}</p>
+              )}
             </CardContent>
+            <CardFooter className="border-t pt-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-center"
+                onClick={() => router.push(module.path)}
+              >
+                进入管理
+              </Button>
+            </CardFooter>
           </Card>
-        </TabsContent>
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>报告中心</CardTitle>
-              <CardDescription>查看系统生成的各种报告</CardDescription>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                报告列表
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        ))}
+      </div>
     </div>
   );
 }

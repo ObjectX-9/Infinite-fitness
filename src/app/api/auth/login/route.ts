@@ -20,6 +20,8 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
   RequestValidator.validateRequired(useInfo, ["username", "password"]);
 
   const { username, password } = useInfo;
+  console.log("✅ ~ POST ~ password:", password);
+  console.log("✅ ~ POST ~ username:", username);
 
   // 查找用户
   const user = await UserModel.findOne({ username });
@@ -31,6 +33,7 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
 
   // 验证密码
   const isPasswordValid = await bcrypt.compare(password, user.password);
+  console.log("✅ ~ POST ~ isPasswordValid:", isPasswordValid);
 
   if (!isPasswordValid) {
     throw ApiErrors.UNAUTHORIZED("用户名或密码错误");
