@@ -5,26 +5,8 @@ import { userBusiness } from "@/app/business/user";
 import { membershipBusiness } from "@/app/business/membership";
 import { User, UserStatus } from "@/model/user/type";
 import { UserMembership, MembershipLevel } from "@/model/user-member/type";
-import Link from "next/link";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -32,48 +14,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Search, Edit, MoreVertical } from "lucide-react";
 import { UserModal } from "@/components/admin/users/UserModal";
+import { UserSearchBar } from "@/components/admin/users/UserSearchBar";
+import { UserTable } from "@/components/admin/users/UserTable";
+import { UserPagination } from "@/components/admin/users/UserPagination";
+import { UserStatusDialog } from "@/components/admin/users/UserStatusDialog";
+import { AdminRoleDialog } from "@/components/admin/users/AdminRoleDialog";
 
+/**
+ * 用户管理页面：管理系统用户、会员和权限
+ * @returns 用户管理页面组件
+ */
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [memberships, setMemberships] = useState<
@@ -93,7 +44,9 @@ export default function UserManagement() {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [isSettingAdmin, setIsSettingAdmin] = useState(false);
 
-  // 加载用户数据
+  /**
+   * 加载用户数据
+   */
   const loadUsers = async () => {
     setLoading(true);
     try {
@@ -118,7 +71,10 @@ export default function UserManagement() {
     }
   };
 
-  // 加载会员信息
+  /**
+   * 加载会员信息
+   * @param userList - 用户列表
+   */
   const loadMembershipInfo = async (userList: User[]) => {
     try {
       const membershipsData: Record<string, UserMembership> = {};
@@ -147,13 +103,18 @@ export default function UserManagement() {
     loadUsers();
   }, [page, limit, status]);
 
-  // 搜索用户
+  /**
+   * 搜索用户
+   */
   const handleSearch = () => {
     setPage(1); // 搜索时重置页码
     loadUsers();
   };
 
-  // 删除用户
+  /**
+   * 删除用户
+   * @param userId - 用户ID
+   */
   const handleDelete = async (userId: string) => {
     try {
       await userBusiness.deleteUser(userId);
@@ -169,13 +130,19 @@ export default function UserManagement() {
     }
   };
 
-  // 修改用户状态
+  /**
+   * 打开状态修改弹窗
+   * @param user - 要修改的用户
+   */
   const openStatusDialog = (user: User) => {
     setCurrentUser(user);
     setNewStatus(user.status);
     setShowStatusDialog(true);
   };
 
+  /**
+   * 修改用户状态
+   */
   const handleStatusChange = async () => {
     if (!currentUser) return;
 
@@ -195,13 +162,20 @@ export default function UserManagement() {
     }
   };
 
-  // 设置/取消管理员权限
+  /**
+   * 打开管理员权限弹窗
+   * @param userId - 用户ID
+   * @param isCurrentlyAdmin - 是否当前已是管理员
+   */
   const openAdminDialog = (userId: string, isCurrentlyAdmin: boolean) => {
     setSelectedUserId(userId);
     setIsSettingAdmin(!isCurrentlyAdmin); // 如果当前是管理员，则操作为取消管理员
     setShowAdminDialog(true);
   };
 
+  /**
+   * 修改管理员权限
+   */
   const handleAdminChange = async () => {
     if (!selectedUserId) return;
 
@@ -234,13 +208,11 @@ export default function UserManagement() {
 
       // 打印出提交的完整数据，检查userId是否正确
       const membershipData = {
-        userId: user._id.toString(), // 确保是字符串
+        userId: user._id,
         level: newLevel,
         startDate: now,
         endDate: endDate,
       };
-
-      console.log("提交会员数据:", membershipData);
 
       await membershipBusiness.createOrUpdateMembership(membershipData);
 
@@ -259,7 +231,11 @@ export default function UserManagement() {
     }
   };
 
-  // 获取状态标签变体
+  /**
+   * 获取状态标签变体
+   * @param status - 用户状态
+   * @returns 状态标签变体
+   */
   const getStatusVariant = (
     status: UserStatus
   ): "default" | "destructive" | "outline" | "secondary" => {
@@ -277,7 +253,11 @@ export default function UserManagement() {
     }
   };
 
-  // 获取会员信息展示
+  /**
+   * 获取会员信息展示
+   * @param userId - 用户ID
+   * @returns 会员信息展示组件
+   */
   const getMembershipInfo = (userId: string) => {
     const membership = memberships[userId];
     if (!membership) {
@@ -314,77 +294,14 @@ export default function UserManagement() {
     );
   };
 
-  // 判断用户是否为管理员
+  /**
+   * 判断用户是否为管理员
+   * @param userId - 用户ID
+   * @returns 是否为管理员
+   */
   const isAdmin = (userId: string) => {
     const membership = memberships[userId];
     return membership && membership.level === MembershipLevel.ADMIN;
-  };
-
-  // 生成分页项
-  const renderPaginationItems = () => {
-    const items = [];
-    const maxVisible = 5; // 最多显示5个页码
-
-    let startPage = Math.max(1, page - Math.floor(maxVisible / 2));
-    const endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-
-    // 第一页
-    if (startPage > 1) {
-      items.push(
-        <PaginationItem key="first">
-          <PaginationLink onClick={() => setPage(1)}>1</PaginationLink>
-        </PaginationItem>
-      );
-
-      if (startPage > 2) {
-        items.push(
-          <PaginationItem key="ellipsis-start">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      }
-    }
-
-    // 页码
-    for (let i = startPage; i <= endPage; i++) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationLink isActive={page === i} onClick={() => setPage(i)}>
-            {i}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-
-    // 最后一页
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        items.push(
-          <PaginationItem key="ellipsis-end">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      }
-
-      items.push(
-        <PaginationItem key="last">
-          <PaginationLink onClick={() => setPage(totalPages)}>
-            {totalPages}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-
-    return items;
-  };
-
-  // 生成用户名称首字母
-  const getInitials = (name: string) => {
-    return name.charAt(0).toUpperCase();
   };
 
   return (
@@ -401,306 +318,57 @@ export default function UserManagement() {
         </CardHeader>
         <CardContent>
           {/* 搜索区域 */}
-          <div className="flex gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索用户名、邮箱或电话"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pl-8"
-              />
-            </div>
-            <Select
-              value={status}
-              onValueChange={(value: UserStatus | "all") => setStatus(value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="选择状态" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value={UserStatus.ACTIVE}>正常</SelectItem>
-                <SelectItem value={UserStatus.INACTIVE}>未激活</SelectItem>
-                <SelectItem value={UserStatus.LOCKED}>已锁定</SelectItem>
-                <SelectItem value={UserStatus.DELETED}>已删除</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSearch}>搜索</Button>
-          </div>
+          <UserSearchBar
+            keyword={keyword}
+            setKeyword={setKeyword}
+            status={status}
+            setStatus={setStatus}
+            onSearch={handleSearch}
+          />
 
           {/* 用户表格 */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>用户</TableHead>
-                  <TableHead>邮箱</TableHead>
-                  <TableHead>电话</TableHead>
-                  <TableHead>会员</TableHead>
-                  <TableHead>管理员</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>注册时间</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10">
-                      正在加载数据...
-                    </TableCell>
-                  </TableRow>
-                ) : users?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10">
-                      暂无用户数据
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  users?.map((user) => (
-                    <TableRow key={user._id?.toString()}>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage src={user.avatar || undefined} />
-                            <AvatarFallback>
-                              {getInitials(user.nickname || user.username)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">
-                              {user.nickname || user.username}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {user.username}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{user.email || "-"}</TableCell>
-                      <TableCell>{user.phone || "-"}</TableCell>
-                      <TableCell>{getMembershipInfo(user._id || "")}</TableCell>
-                      <TableCell>
-                        {isAdmin(user._id || "") ? (
-                          <Badge
-                            variant="secondary"
-                            className="bg-yellow-100 text-yellow-800 border-yellow-300"
-                          >
-                            是
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-400">否</span>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="ml-2"
-                          onClick={() =>
-                            openAdminDialog(
-                              user._id || "",
-                              isAdmin(user._id || "")
-                            )
-                          }
-                        >
-                          {isAdmin(user._id || "") ? "取消" : "设置"}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(user.status)}>
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">操作</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>操作</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/admin/users/${user._id}`}>
-                                <Edit className="mr-2 h-4 w-4" /> 编辑
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => openStatusDialog(user)}
-                            >
-                              修改状态
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem
-                                  onSelect={(e) => e.preventDefault()}
-                                  className="text-destructive"
-                                >
-                                  删除用户
-                                </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    确定要删除此用户吗？
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    删除后将无法恢复，用户数据将被标记为已删除状态。
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>取消</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() =>
-                                      handleDelete(user._id?.toString() || "")
-                                    }
-                                  >
-                                    确认删除
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-              <TableCaption>共 {total} 条记录</TableCaption>
-            </Table>
-          </div>
+          <UserTable
+            users={users}
+            loading={loading}
+            total={total}
+            getStatusVariant={getStatusVariant}
+            getMembershipInfo={getMembershipInfo}
+            isAdmin={isAdmin}
+            handleDelete={handleDelete}
+            openStatusDialog={openStatusDialog}
+            openAdminDialog={openAdminDialog}
+          />
 
           {/* 分页 */}
-          <div className="mt-4 flex justify-between">
-            <div className="flex items-center gap-2">
-              <Select
-                value={limit.toString()}
-                onValueChange={(value) => setLimit(parseInt(value))}
-              >
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationPrevious
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  aria-disabled={page === 1}
-                />
-                {renderPaginationItems()}
-                <PaginationNext
-                  onClick={() =>
-                    setPage((prev) => Math.min(totalPages, prev + 1))
-                  }
-                  aria-disabled={page === totalPages}
-                />
-              </PaginationContent>
-            </Pagination>
-          </div>
+          <UserPagination
+            page={page}
+            setPage={setPage}
+            limit={limit}
+            setLimit={setLimit}
+            totalPages={totalPages}
+          />
         </CardContent>
       </Card>
 
       {/* 修改状态的弹窗 */}
-      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>修改用户状态</DialogTitle>
-            <DialogDescription>
-              更改用户 {currentUser?.username} 的状态
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="current-status" className="text-right">
-                当前状态
-              </Label>
-              <div className="col-span-3">
-                {currentUser && (
-                  <Badge variant={getStatusVariant(currentUser.status)}>
-                    {currentUser.status}
-                  </Badge>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="new-status" className="text-right">
-                新状态
-              </Label>
-              <Select
-                value={newStatus}
-                onValueChange={(value: UserStatus) => setNewStatus(value)}
-              >
-                <SelectTrigger className="col-span-3" id="new-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UserStatus.ACTIVE}>正常</SelectItem>
-                  <SelectItem value={UserStatus.INACTIVE}>未激活</SelectItem>
-                  <SelectItem value={UserStatus.LOCKED}>已锁定</SelectItem>
-                  <SelectItem value={UserStatus.DELETED}>已删除</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowStatusDialog(false)}
-            >
-              取消
-            </Button>
-            <Button onClick={handleStatusChange}>确认修改</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UserStatusDialog
+        open={showStatusDialog}
+        onOpenChange={setShowStatusDialog}
+        currentUser={currentUser}
+        newStatus={newStatus}
+        setNewStatus={setNewStatus}
+        onStatusChange={handleStatusChange}
+        getStatusVariant={getStatusVariant}
+      />
 
       {/* 设置/取消管理员的弹窗 */}
-      <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {isSettingAdmin ? "设置为管理员" : "取消管理员权限"}
-            </DialogTitle>
-            <DialogDescription>
-              {isSettingAdmin
-                ? "确定要将该用户设置为系统管理员吗？管理员拥有所有系统权限。"
-                : "确定要取消该用户的管理员权限吗？"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowAdminDialog(false)}
-              disabled={loading}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleAdminChange}
-              disabled={loading}
-              variant={isSettingAdmin ? "default" : "destructive"}
-            >
-              {loading ? "处理中..." : isSettingAdmin ? "确认设置" : "确认取消"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminRoleDialog
+        open={showAdminDialog}
+        onOpenChange={setShowAdminDialog}
+        isSettingAdmin={isSettingAdmin}
+        onAdminChange={handleAdminChange}
+        loading={loading}
+      />
     </div>
   );
 }

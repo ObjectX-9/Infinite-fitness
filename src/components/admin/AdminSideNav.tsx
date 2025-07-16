@@ -39,7 +39,7 @@ export function AdminSideNav({ className }: AdminSideNavProps) {
       )}
     >
       <div className="flex h-14 items-center border-b px-4 font-semibold">
-        <span className="text-xl">AI健身管理后台</span>
+        <span className="text-xl">fit admin</span>
       </div>
       <div className="space-y-1 p-2">
         {navItems.map((item) => {
