@@ -51,7 +51,6 @@ export function UserSearchBar({
           <SelectItem value={UserStatus.ACTIVE}>正常</SelectItem>
           <SelectItem value={UserStatus.INACTIVE}>未激活</SelectItem>
           <SelectItem value={UserStatus.LOCKED}>已锁定</SelectItem>
-          <SelectItem value={UserStatus.DELETED}>已删除</SelectItem>
         </SelectContent>
       </Select>
       <Button onClick={() => onSearch(keyword, status)}>搜索</Button>

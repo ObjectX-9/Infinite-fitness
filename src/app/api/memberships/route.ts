@@ -7,6 +7,8 @@ import {
   createPagination,
   createApiParams,
   successResponse,
+  parseRequestBody,
+  RequestValidator,
 } from "@/utils/api-helpers";
 
 /**
@@ -59,42 +61,51 @@ export const GET = unifiedInterfaceProcess(async (req: NextRequest) => {
  */
 export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
   try {
-    const body = await req.json();
-    const { userId, level, startDate, endDate } = body;
+    const memberInfo = await parseRequestBody(req);
 
-    console.log("接收到的会员数据:", body);
+    RequestValidator.validateRequired(memberInfo, ["userId", "level", "startDate", "endDate"]);
 
-    // 参数验证
-    if (!userId || !level || !startDate || !endDate) {
-      console.error("会员信息不完整:", { userId, level, startDate, endDate });
-      throw ApiErrors.BAD_REQUEST("会员信息不完整");
-    }
+    const { userId, level, startDate, endDate } = memberInfo;
 
-    // 检查用户是否已有会员信息
-    const existingMembership = await UserMembershipModel.findOne({ userId });
-
-    let membership;
-
-    if (existingMembership) {
-      // 更新现有会员信息
-      membership = await UserMembershipModel.findOneAndUpdate(
-        { userId },
-        { level, startDate, endDate },
-        { new: true }
-      );
-    } else {
-      // 创建新会员信息
-      membership = await UserMembershipModel.create({
-        userId,
-        level,
-        startDate,
-        endDate,
-      });
-    }
+    // 创建新会员信息
+    const membership = await UserMembershipModel.create({
+      userId,
+      level,
+      startDate,
+      endDate,
+    });
 
     return successResponse(membership, "会员信息保存成功");
   } catch (error) {
     console.error("创建会员信息出错:", error);
     throw error;
   }
+});
+
+/**
+ * 更新会员信息
+ */
+export const PUT = unifiedInterfaceProcess(async (req: NextRequest) => {
+  const memberInfo = await parseRequestBody(req);
+
+  RequestValidator.validateRequired(memberInfo, ["userId", "level", "startDate", "endDate"]);
+
+  const { userId, level, startDate, endDate } = memberInfo;
+  
+  const membership = await UserMembershipModel.findOneAndUpdate(
+    { userId },
+    { level, startDate, endDate },
+    { new: true }
+  );
+
+  return successResponse(membership, "会员信息更新成功");
+});
+
+export const DELETE = unifiedInterfaceProcess(async (req: NextRequest) => {
+  const apiParams = createApiParams(req);
+  const userId = apiParams.getString("userId");
+
+  await UserMembershipModel.deleteOne({ userId });
+
+  return successResponse(null, "会员信息删除成功");
 });

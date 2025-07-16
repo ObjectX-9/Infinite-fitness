@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { User, UserStatus } from "@/model/user/type";
-import Link from "next/link";
-import { Edit, MoreVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -14,25 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { UserEditModal } from "./UserEditModal";
+import { MembershipLevel, UserMembership } from "@/model/user-member/type";
 
 /**
  * 用户表格组件：展示用户列表和操作按钮
@@ -41,27 +23,34 @@ import {
  */
 interface UserTableProps {
   users: User[];
+  membersShip: UserMembership[];
   loading: boolean;
   total: number;
   getStatusVariant: (status: UserStatus) => "default" | "destructive" | "outline" | "secondary";
   getMembershipInfo: (userId: string) => React.ReactNode;
-  isAdmin: (userId: string) => boolean;
+  getMembershipEndDate: (userId: string) => string;
+  checkoutIsAdmin: (userId: string) => boolean;
   handleDelete: (userId: string) => Promise<void>;
-  openStatusDialog: (user: User) => void;
-  openAdminDialog: (userId: string, isCurrentlyAdmin: boolean) => void;
+  loadUsers: () => void;
 }
 
 export function UserTable({
   users,
+  membersShip,
   loading,
   total,
   getStatusVariant,
   getMembershipInfo,
-  isAdmin,
+  getMembershipEndDate,
+  checkoutIsAdmin,
   handleDelete,
-  openStatusDialog,
-  openAdminDialog,
+  loadUsers
 }: UserTableProps) {
+  // 用于控制编辑弹窗的状态
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedMembership, setSelectedMembership] = useState<UserMembership | null>(null);
+
   /**
    * 生成用户名称首字母
    * @param name - 用户名称
@@ -69,6 +58,31 @@ export function UserTable({
    */
   const getInitials = (name: string) => {
     return name.charAt(0).toUpperCase();
+  };
+
+  /**
+   * 打开编辑用户弹窗
+   * @param user - 要编辑的用户
+   */
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setSelectedMembership(getMembership(user._id));
+    setEditModalOpen(true);
+  };
+
+  const getMembership = (userId: string) => {
+    if (!membersShip) {
+      return null;
+    }
+    const membership = membersShip?.find((item) => item.userId === userId);
+    if (!membership) { 
+      return {
+        level: MembershipLevel.FREE,
+        startDate: new Date(),
+        endDate: new Date(),
+      } as UserMembership;
+    }
+    return membership;
   };
 
   return (
@@ -80,6 +94,7 @@ export function UserTable({
             <TableHead>邮箱</TableHead>
             <TableHead>电话</TableHead>
             <TableHead>会员</TableHead>
+            <TableHead>到期时间</TableHead>
             <TableHead>管理员</TableHead>
             <TableHead>状态</TableHead>
             <TableHead>注册时间</TableHead>
@@ -101,7 +116,8 @@ export function UserTable({
             </TableRow>
           ) : (
             users?.map((user) => (
-              <TableRow key={user._id?.toString()}>
+              <TableRow key={user._id}>
+                {/* 头像 */}
                 <TableCell>
                   <div className="flex items-center">
                     <Avatar className="h-8 w-8 mr-2">
@@ -111,104 +127,59 @@ export function UserTable({
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="font-medium">
-                        {user.nickname || user.username}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="font-medium text-gray-600">
                         {user.username}
                       </div>
                     </div>
                   </div>
                 </TableCell>
+                {/* 邮箱 */}
                 <TableCell>{user.email || "-"}</TableCell>
+                {/* 电话 */}
                 <TableCell>{user.phone || "-"}</TableCell>
+                {/* 会员 */}
                 <TableCell>{getMembershipInfo(user._id || "")}</TableCell>
+                {/* 到期时间 */}
+                <TableCell>{getMembershipEndDate(user._id || "")}</TableCell>
+                {/* 管理员 */}
                 <TableCell>
-                  {isAdmin(user._id || "") ? (
+                  {checkoutIsAdmin(user._id || "") ? (
                     <Badge
                       variant="secondary"
-                      className="bg-yellow-100 text-yellow-800 border-yellow-300"
+                      className="bg-blue-100 text-blue-800 border-blue-300"
                     >
                       是
                     </Badge>
                   ) : (
-                    <span className="text-gray-400">否</span>
+                    <Badge
+                      variant="secondary"
+                      className="bg-gray-100 text-gray-800 border-gray-300"
+                    >
+                      否
+                    </Badge>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-2"
-                    onClick={() =>
-                      openAdminDialog(
-                        user._id || "",
-                        isAdmin(user._id || "")
-                      )
-                    }
-                  >
-                    {isAdmin(user._id || "") ? "取消" : "设置"}
-                  </Button>
                 </TableCell>
+                {/* 状态 */}
                 <TableCell>
                   <Badge variant={getStatusVariant(user.status)}>
                     {user.status}
                   </Badge>
                 </TableCell>
+                {/* 注册时间 */}
                 <TableCell>
                   {new Date(user.createdAt).toLocaleDateString()}
                 </TableCell>
+                {/* 操作 */}
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">操作</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>操作</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/users/${user._id}`}>
-                          <Edit className="mr-2 h-4 w-4" /> 编辑
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => openStatusDialog(user)}
-                      >
-                        修改状态
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
-                            className="text-destructive"
-                          >
-                            删除用户
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              确定要删除此用户吗？
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              删除后将无法恢复，用户数据将被标记为已删除状态。
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>取消</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() =>
-                                handleDelete(user._id?.toString() || "")
-                              }
-                            >
-                              确认删除
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-0"
+                    onClick={() => openEditModal(user)}
+                  >
+                    <Edit className="h-2 w-3 mr-1 text-gray-600" />
+                    <span className="text-sm text-gray-600">编辑</span>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
@@ -216,6 +187,23 @@ export function UserTable({
         </TableBody>
         <TableCaption>共 {total} 条记录</TableCaption>
       </Table>
+
+      {/* 用户编辑弹窗 */}
+      {selectedUser && selectedMembership && (
+        <UserEditModal
+          user={selectedUser}
+          membership={selectedMembership}
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          onSuccess={() => {
+            loadUsers();
+            setEditModalOpen(false);
+          }}
+          handleDelete={handleDelete}
+          getMembershipInfo={getMembershipInfo}
+          getMembershipEndDate={getMembershipEndDate}
+        />
+      )}
     </div>
   );
 } 

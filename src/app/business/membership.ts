@@ -35,14 +35,9 @@ class MembershipBusiness {
   }
 
   /**
-   * 创建或更新会员信息
+   * 创建会员信息
    */
-  async createOrUpdateMembership(membershipData: {
-    userId: string;
-    level: MembershipLevel;
-    startDate: Date;
-    endDate: Date;
-  }): Promise<UserMembership> {
+  async createMembership(membershipData: Partial<UserMembership>): Promise<UserMembership> {
     const response = await request.post<MembershipResponse>(
       "memberships",
       membershipData
@@ -50,73 +45,46 @@ class MembershipBusiness {
     return response.data.membership;
   }
 
-  /**
-   * 获取会员列表
-   */
-  async getMembershipList(options: {
-    page?: number;
-    limit?: number;
-    userId?: string;
-  }): Promise<MembershipListResponse> {
-    const response = await request.get<MembershipListResponse>(
-      "memberships",
-      options
-    );
-    return response.data;
+  async deleteMembership(userId: string): Promise<void> {
+    await request.delete(`memberships`, { params: { userId } });
   }
 
   /**
-   * 检查用户会员是否有效
+   * 更新会员信息，若会员信息不存在则创建
    */
-  async checkActiveMembership(userId: string): Promise<boolean> {
-    try {
-      const membership = await this.getMembershipByUserId(userId);
-      if (!membership) {
-        return false;
+  async updateMembership(membershipData: Partial<UserMembership>): Promise<UserMembership> {
+    // 检查用户是否已有会员信息
+    const existingMembership = await this.getMembershipByUserId(membershipData.userId as string);
+
+    // 如果会员等级为免费，则删除会员信息
+    if (membershipData.level === MembershipLevel.FREE) {
+      if (existingMembership) {
+        await this.deleteMembership(membershipData.userId as string);
       }
+      
+      return {
+        userId: membershipData.userId,
+        level: MembershipLevel.FREE,
+        startDate: new Date(),
+        endDate: new Date(),
+      } as UserMembership;
+    }
 
-      // 检查会员级别非免费且未过期
-      const now = new Date();
-      return (
-        membership.level !== MembershipLevel.FREE &&
-        new Date(membership.endDate) > now
+    // 如果已有会员信息则更新，否则创建
+    if (existingMembership) {
+      const response = await request.put<MembershipResponse>(
+        "memberships",
+        membershipData
       );
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * 延长会员有效期
-   */
-  async extendMembership(
-    userId: string,
-    months: number
-  ): Promise<UserMembership> {
-    const membership = await this.getMembershipByUserId(userId);
-    const now = new Date();
-
-    let startDate: Date;
-    let endDate: Date;
-
-    if (membership && new Date(membership.endDate) > now) {
-      // 如果现有会员未过期，从原到期日开始延长
-      startDate = new Date(membership.startDate);
-      endDate = new Date(membership.endDate);
-      endDate.setMonth(endDate.getMonth() + months);
+      return response?.data?.membership;
     } else {
-      // 如果不存在会员或已过期，从当前日期开始计算
-      startDate = now;
-      endDate = new Date(now);
-      endDate.setMonth(endDate.getMonth() + months);
+      // 如果不存在会员信息，则创建
+      const response = await request.post<MembershipResponse>(
+        "memberships",
+        membershipData
+      );
+      return response.data.membership;
     }
-
-    return this.createOrUpdateMembership({
-      userId,
-      level: MembershipLevel.MEMBER, // 默认为普通会员
-      startDate,
-      endDate,
-    });
   }
 }
 

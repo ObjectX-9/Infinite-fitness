@@ -18,8 +18,6 @@ import { UserModal } from "@/components/admin/users/UserModal";
 import { UserSearchBar } from "@/components/admin/users/UserSearchBar";
 import { UserTable } from "@/components/admin/users/UserTable";
 import { UserPagination } from "@/components/admin/users/UserPagination";
-import { UserStatusDialog } from "@/components/admin/users/UserStatusDialog";
-import { AdminRoleDialog } from "@/components/admin/users/AdminRoleDialog";
 
 /**
  * 用户管理页面：管理系统用户、会员和权限
@@ -28,9 +26,7 @@ import { AdminRoleDialog } from "@/components/admin/users/AdminRoleDialog";
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [memberships, setMemberships] = useState<
-    Record<string, UserMembership>
-  >({});
+  const [memberships, setMemberships] = useState<UserMembership[]>([]);
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState<UserStatus | "all">("all");
@@ -38,12 +34,6 @@ export default function UserManagement() {
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [newStatus, setNewStatus] = useState<UserStatus>(UserStatus.ACTIVE);
-  const [showAdminDialog, setShowAdminDialog] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [isSettingAdmin, setIsSettingAdmin] = useState(false);
 
   /**
    * 加载用户数据
@@ -79,7 +69,7 @@ export default function UserManagement() {
    */
   const loadMembershipInfo = async (userList: User[]) => {
     try {
-      const membershipsData: Record<string, UserMembership> = {};
+      const membershipsData: UserMembership[] = [];
 
       // 对每个用户并行请求会员信息
       const membershipPromises = userList.map(async (user) => {
@@ -88,10 +78,12 @@ export default function UserManagement() {
             user._id
           );
           if (membership) {
-            membershipsData[user._id] = membership;
+            membershipsData.push(membership);
           }
         }
       });
+
+
 
       await Promise.all(membershipPromises);
       setMemberships(membershipsData);
@@ -159,107 +151,6 @@ export default function UserManagement() {
   };
 
   /**
-   * 打开状态修改弹窗
-   * @param user - 要修改的用户
-   */
-  const openStatusDialog = (user: User) => {
-    setCurrentUser(user);
-    setNewStatus(user.status);
-    setShowStatusDialog(true);
-  };
-
-  /**
-   * 修改用户状态
-   */
-  const handleStatusChange = async () => {
-    if (!currentUser) return;
-
-    try {
-      const userId = currentUser._id;
-      await userBusiness.changeUserStatus(userId, newStatus);
-      toast.success("状态更新成功", {
-        description: "用户状态已成功更新",
-      });
-      setShowStatusDialog(false);
-      loadUsers();
-    } catch (error) {
-      toast.error("状态更新失败", {
-        description: "无法更新用户状态，请稍后再试",
-      });
-      console.error(error);
-    }
-  };
-
-  /**
-   * 打开管理员权限弹窗
-   * @param userId - 用户ID
-   * @param isCurrentlyAdmin - 是否当前已是管理员
-   */
-  const openAdminDialog = (userId: string, isCurrentlyAdmin: boolean) => {
-    setSelectedUserId(userId);
-    setIsSettingAdmin(!isCurrentlyAdmin); // 如果当前是管理员，则操作为取消管理员
-    setShowAdminDialog(true);
-  };
-
-  /**
-   * 修改管理员权限
-   */
-  const handleAdminChange = async () => {
-    if (!selectedUserId) return;
-
-    setLoading(true);
-    try {
-      const user = users.find((u) => u._id === selectedUserId);
-      if (!user) return;
-
-      const membership = memberships[selectedUserId];
-      const now = new Date();
-      let endDate = new Date();
-      endDate.setFullYear(now.getFullYear() + 10); // 默认设置10年有效期
-
-      if (membership) {
-        // 如果已有会员信息，保留原有到期日期
-        if (new Date(membership.endDate) > now) {
-          endDate = new Date(membership.endDate);
-        }
-      }
-
-      // 设置新的会员级别
-      const newLevel = isSettingAdmin
-        ? MembershipLevel.ADMIN
-        : MembershipLevel.MEMBER;
-
-      // 确保userId是字符串且有值
-      if (!user._id) {
-        throw new Error("用户ID无效");
-      }
-
-      // 打印出提交的完整数据，检查userId是否正确
-      const membershipData = {
-        userId: user._id,
-        level: newLevel,
-        startDate: now,
-        endDate: endDate,
-      };
-
-      await membershipBusiness.createOrUpdateMembership(membershipData);
-
-      // 刷新会员信息
-      await loadUsers();
-
-      toast.success(isSettingAdmin ? "已成功设为管理员" : "已取消管理员权限");
-      setShowAdminDialog(false);
-    } catch (error) {
-      toast.error("操作失败", {
-        description: "无法更改管理员权限，请稍后再试",
-      });
-      console.error("错误详情:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
    * 获取状态标签变体
    * @param status - 用户状态
    * @returns 状态标签变体
@@ -274,8 +165,6 @@ export default function UserManagement() {
         return "secondary";
       case UserStatus.LOCKED:
         return "destructive";
-      case UserStatus.DELETED:
-        return "outline";
       default:
         return "default";
     }
@@ -287,13 +176,23 @@ export default function UserManagement() {
    * @returns 会员信息展示组件
    */
   const getMembershipInfo = (userId: string) => {
-    const membership = memberships[userId];
+    const membership = memberships.find((item) => item.userId === userId);
     if (!membership) {
-      return <span className="text-gray-400">非会员</span>;
+      return <Badge
+        variant="secondary"
+        className="bg-gray-100 text-gray-800 border-gray-300"
+      >
+        非会员
+      </Badge>;
     }
 
     if (membership.level === MembershipLevel.FREE) {
-      return <span className="text-gray-400">免费用户</span>;
+      return <Badge
+        variant="secondary"
+        className="bg-gray-100 text-gray-800 border-gray-300"
+      >
+        免费用户
+      </Badge>;
     }
 
     // 检查会员是否有效
@@ -302,24 +201,39 @@ export default function UserManagement() {
     const isActive = endDate > now;
 
     if (!isActive) {
-      return <span className="text-gray-400">已过期</span>;
+      return <Badge
+        variant="secondary"
+        className="bg-red-100 text-red-800 border-red-300"
+      >
+        已过期
+      </Badge>;
     }
 
-    // 格式化到期日期
-    const formattedDate = endDate.toLocaleDateString();
 
     // 管理员和普通会员统一只显示会员信息和到期日期
     return (
-      <div>
+      <div className="flex items-center gap-2">
         <Badge
           variant="outline"
-          className="bg-blue-100 text-blue-800 border-blue-300"
+          className="bg-green-100 text-green-800 border-green-400"
         >
           会员
         </Badge>
-        <div className="text-xs mt-1">到期: {formattedDate}</div>
       </div>
     );
+  };
+
+  /**
+   * 获取会员到期时间
+   * @param userId - 用户ID
+   * @returns 会员到期时间
+   */
+  const getMembershipEndDate = (userId: string) => {
+    const membership = memberships.find((item) => item.userId === userId);
+    if (!membership) {
+      return "-";
+    }
+    return new Date(membership.endDate).toLocaleDateString();
   };
 
   /**
@@ -327,9 +241,9 @@ export default function UserManagement() {
    * @param userId - 用户ID
    * @returns 是否为管理员
    */
-  const isAdmin = (userId: string) => {
-    const membership = memberships[userId];
-    return membership && membership.level === MembershipLevel.ADMIN;
+  const checkoutIsAdmin = (userId: string) => {
+    const membership = memberships.find((item) => item.userId === userId);
+    return membership?.level === MembershipLevel.ADMIN;
   };
 
   useEffect(() => {
@@ -359,14 +273,15 @@ export default function UserManagement() {
           {/* 用户表格 */}
           <UserTable
             users={filteredUsers}
+            membersShip={memberships}
             loading={loading}
             total={total}
             getStatusVariant={getStatusVariant}
             getMembershipInfo={getMembershipInfo}
-            isAdmin={isAdmin}
+            getMembershipEndDate={getMembershipEndDate}
+            checkoutIsAdmin={checkoutIsAdmin}
             handleDelete={handleDelete}
-            openStatusDialog={openStatusDialog}
-            openAdminDialog={openAdminDialog}
+            loadUsers={loadUsers}
           />
 
           {/* 分页 */}
@@ -379,26 +294,6 @@ export default function UserManagement() {
           />
         </CardContent>
       </Card>
-
-      {/* 修改状态的弹窗 */}
-      <UserStatusDialog
-        open={showStatusDialog}
-        onOpenChange={setShowStatusDialog}
-        currentUser={currentUser}
-        newStatus={newStatus}
-        setNewStatus={setNewStatus}
-        onStatusChange={handleStatusChange}
-        getStatusVariant={getStatusVariant}
-      />
-
-      {/* 设置/取消管理员的弹窗 */}
-      <AdminRoleDialog
-        open={showAdminDialog}
-        onOpenChange={setShowAdminDialog}
-        isSettingAdmin={isSettingAdmin}
-        onAdminChange={handleAdminChange}
-        loading={loading}
-      />
     </div>
   );
 }

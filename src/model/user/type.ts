@@ -5,7 +5,6 @@ export enum UserStatus {
   ACTIVE = "ACTIVE", // 正常
   INACTIVE = "INACTIVE", // 未激活
   LOCKED = "LOCKED", // 锁定
-  DELETED = "DELETED", // 已删除
 }
 
 /**
