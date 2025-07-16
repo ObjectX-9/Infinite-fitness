@@ -7,7 +7,7 @@ alwaysApply: true
 name: 项目通用规则
 description: "统一团队规范：中文回复、pnpm 安装、依赖版本检测、函数自动注释"
 globs:
-  - "**/*.js"
+  - "**/*.tsx"
   - "**/*.ts"
 alwaysApply: true
 ---
@@ -29,3 +29,50 @@ alwaysApply: true
    * @param paramName - 参数说明
    * @returns 返回值说明
    */
+
+## 项目设计规范
+- api都在路径src/app/api，封装了一层业务层，在src/app/business，实现功能的时候只能使用业务层实现的方法
+- 如果业务层没实现，在去看api有无对应接口，如果有则实现业务组件再调用
+- 创建新组件需要先查看src/components目录下是否有，如果没有再创建，对应目录比如src/components/admin/users/UserModal.tsx
+- 数据模型实现路径：src/model
+
+## 项目开发规范
+- 禁止使用any，先判读项目中是否一有实现的类型
+- 每个组件尽量不要超过500行，超过考虑拆分组件
+- 三方组件库使用shadcn，先判断src/components/ui中有没有需要的组件，如果没有再安装
+
+## 项目组织结构
+查找方法可以先根据这个定位下，写新的代码也需要放在指定的位置
+```
+.
+├── app
+│   ├── admin # 管理员后台
+│   ├── api   # api接口
+│   ├── business # 业务方法，封装api接口供组件使用
+│   ├── favicon.ico
+│   ├── fit-record
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components
+│   ├── BottomNav.tsx # 底部导航条
+│   ├── BottomNavWrapper.tsx
+│   ├── admin # 管理员页面组件
+│   ├── fit-record # 健身记录页面组件
+│   └── ui # shadcn的组件
+├── lib 
+│   ├── mongoose.ts # 数据库连接方法
+│   ├── time.ts # 时间处理方法
+│   └── utils.ts # 一些功能方法
+├── model # 数据模型
+│   ├── fit-record 
+│   ├── user # 用户模型
+│   ├── user-member # 会员模型
+│   └── user-payment # 支付模型
+└── utils
+    ├── api-helpers.ts # api帮助函数
+    └── request.ts # 请求帮助函数
+
+```
+
+  
