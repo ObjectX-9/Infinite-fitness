@@ -1,49 +1,119 @@
-
-// 器械类别
-export type EquipmentCategory =
+/**
+ * 器械类别
+ */
+export enum EquipmentCategory {
   // 力量训练
-  | "strength"
+  STRENGTH = "strength",
   // 有氧训练
-  | "cardio"
+  CARDIO = "cardio",
   // 功能性训练
-  | "functional"
+  FUNCTIONAL = "functional",
   // 康复训练
-  | "rehabilitation"
+  REHABILITATION = "rehabilitation",
   // 拉伸辅助
-  | "stretching"
+  STRETCHING = "stretching",
   // 其他
-  | "other";
+  OTHER = "other"
+}
 
-// 健身器械接口
+/**
+ * 健身器械接口
+ */
 export interface FitnessEquipment {
-  // 基本信息
-  id: string; // 唯一标识符
-  name: string; // 器械名称
-  description: string; // 器械描述
-  imageUrls: string[]; // 器械图片链接数组
+  /**
+   * 唯一标识符
+   */
+  _id: string;
+  
+  /**
+   * 器械名称
+   */
+  name: string;
+  
+  /**
+   * 器械描述
+   */
+  description: string;
+  
+  /**
+   * 器械图片链接数组
+   */
+  imageUrls: string[];
 
-  // 分类信息
-  category: EquipmentCategory; // 器械类别
-  targetMusclesIds: string[]; // 主要锻炼肌群
-  fitnessGoalsIds: string[]; // 适合的健身目标
+  /**
+   * 器械类别
+   */
+  category: EquipmentCategory;
+  
+  /**
+   * 主要锻炼肌群ID数组
+   */
+  targetMusclesIds: string[];
+  
+  /**
+   * 适合的健身目标ID数组
+   */
+  fitnessGoalsIds: string[];
 
-  // 使用信息
-  usageInstructions: string[]; // 使用指南
-  safetyTips: string[]; // 安全提示
-  usageScenariosIds: string[]; // 使用场景
+  /**
+   * 使用指南
+   */
+  usageInstructions: string[];
+  
+  /**
+   * 安全提示
+   */
+  safetyTips: string;
+  
+  /**
+   * 使用场景ID数组
+   */
+  usageScenariosIds: string[];
 
+  /**
+   * 推荐的训练动作ID列表
+   */
+  recommendedExercisesIds?: string[];
+  
+  /**
+   * 替代器械ID列表
+   */
+  alternativesIds?: string[];
+  
+  /**
+   * 特点和优势
+   */
+  featuresAndBenefits?: string[];
 
-  // 相关信息
-  recommendedExercisesIds?: string[]; // 推荐的训练动作ID列表
-  alternativesIds?: string[]; // 替代器械
-  featuresAndBenefits?: string[]; // 特点和优势
-
-  // 自定义数据
-  createdAt: string;
-  updatedAt: string;
+  /**
+   * 创建时间
+   */
+  createdAt: Date;
+  
+  /**
+   * 更新时间
+   */
+  updatedAt: Date;
+  
+  /**
+   * 是否为自定义器械
+   */
   isCustom?: boolean;
+  
+  /**
+   * 创建用户ID
+   */
   userId?: string;
+  
+  /**
+   * 备注
+   */
   notes?: string;
+  
+  /**
+   * 排序
+   */
+  order: number;
 }
 // 器械库类型
 export type EquipmentLibrary = Record<string, FitnessEquipment>;
