@@ -52,7 +52,7 @@ export default function UserManagement() {
       setTotalPages(result.pagination.totalPages);
 
       // 加载所有用户的会员信息
-      await loadMembershipInfo(result.items);
+      await loadMembershipInfo();
     } catch (error) {
       toast.error("获取用户列表失败", {
         description: "请稍后再试或联系管理员",
@@ -67,26 +67,10 @@ export default function UserManagement() {
    * 加载会员信息
    * @param userList - 用户列表
    */
-  const loadMembershipInfo = async (userList: User[]) => {
+  const loadMembershipInfo = async () => {
     try {
-      const membershipsData: UserMembership[] = [];
-
-      // 对每个用户并行请求会员信息
-      const membershipPromises = userList.map(async (user) => {
-        if (user._id) {
-          const membership = await membershipBusiness.getMembershipByUserId(
-            user._id
-          );
-          if (membership) {
-            membershipsData.push(membership);
-          }
-        }
-      });
-
-
-
-      await Promise.all(membershipPromises);
-      setMemberships(membershipsData);
+      const membershipsData = await membershipBusiness.getMembershipList(page, limit);
+      setMemberships(membershipsData.items);
     } catch (error) {
       console.error("获取会员信息失败:", error);
     }
@@ -176,6 +160,8 @@ export default function UserManagement() {
    * @returns 会员信息展示组件
    */
   const getMembershipInfo = (userId: string) => {
+    console.log('✅ ✅ ✅ ~  getMembershipInfo ~  memberships:', memberships);
+
     const membership = memberships.find((item) => item.userId === userId);
     if (!membership) {
       return <Badge

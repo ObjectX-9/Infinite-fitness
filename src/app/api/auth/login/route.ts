@@ -9,6 +9,8 @@ import {
   parseRequestBody,
   RequestValidator,
 } from "@/utils/api-helpers";
+import { MembershipLevel, UserMembership } from "@/model/user-member/type";
+import { UserMembershipModel } from "@/model/user-member";
 
 /**
  * 用户登录
@@ -20,11 +22,11 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
   RequestValidator.validateRequired(useInfo, ["username", "password"]);
 
   const { username, password } = useInfo;
-  console.log("✅ ~ POST ~ password:", password);
-  console.log("✅ ~ POST ~ username:", username);
 
   // 查找用户
   const user = await UserModel.findOne({ username });
+
+  const userMembership = await UserMembershipModel.findOne({ userId: user._id }) as UserMembership;
 
   // 用户不存在
   if (!user) {
@@ -33,19 +35,22 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
 
   // 验证密码
   const isPasswordValid = await bcrypt.compare(password, user.password);
-  console.log("✅ ~ POST ~ isPasswordValid:", isPasswordValid);
 
   if (!isPasswordValid) {
     throw ApiErrors.UNAUTHORIZED("用户名或密码错误");
   }
 
   // 生成JWT令牌
-  const secret = process.env.JWT_SECRET || "your-default-secret";
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw ApiErrors.FORBIDDEN("JWT_SECRET 未配置");
+  }
+
   const token = jwt.sign(
     {
       userId: user._id,
       username: user.username,
-      role: user.role || "user",
+      membershipLevel: userMembership.level || MembershipLevel.FREE,
     },
     secret,
     { expiresIn: "7d" }

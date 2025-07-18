@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
+import { withAuth, isInWhitelist } from "./withAuth";
+import { withRoleFilter } from "./withRoleFormatter";
 
 /**
  * 统一的API响应数据结构
@@ -12,6 +14,19 @@ export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
   timestamp?: number;
+}
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: Pagination;
 }
 
 /**
@@ -142,20 +157,31 @@ export function errorResponse(
  * @returns 包装后的处理函数
  */
 export function unifiedInterfaceProcess<T extends any[], R>(
-  handler: (...args: T) => Promise<NextResponse<ApiResponse<R>>>
+  handler: (req: NextRequest, ...args: T) => Promise<NextResponse<ApiResponse<R>>>
 ) {
-  return async (...args: T): Promise<NextResponse<ApiResponse<R>>> => {
+  return async (req: NextRequest, ...args: T): Promise<NextResponse<ApiResponse<R>>> => {
     try {
       // 确保数据库已连接
       await connectDB();
 
-      const response = await handler(...args);
+      // 获取请求路径
+      const path = req.nextUrl.pathname;
+      
+      // 解析token获取用户信息
+      const userInfo = await withAuth(req);
+      
+      // 如果不在白名单中且没有用户信息，则返回未授权错误
+      if (!isInWhitelist(path) && !userInfo) {
+        return errorResponse(ApiErrors.UNAUTHORIZED("未授权，请先登录"), 401);
+      }
+
+      const response = await handler(req, ...args);
       const responseData = await response.json();
 
-      return NextResponse.json(responseData, {
-        status: response.status,
-        headers: response.headers,
-      });
+      // 根据用户信息过滤数据: responseData
+      const filteredData = withRoleFilter(userInfo, responseData.data);
+
+      return successResponse(filteredData, responseData.message, responseData.code);
     } catch (error) {
       console.error("API Error:", error);
 
@@ -207,13 +233,7 @@ export function unifiedInterfaceProcess<T extends any[], R>(
  */
 export function paginatedResponse<T>(
   items: T[],
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasMore: boolean;
-  },
+  pagination: Pagination,
   message: string = "获取成功"
 ): NextResponse<ApiResponse<{ items: T[]; pagination: typeof pagination }>> {
   return successResponse(

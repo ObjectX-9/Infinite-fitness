@@ -12,7 +12,7 @@ import {
 } from "@/utils/api-helpers";
 
 /**
- * 获取所有会员信息列表
+ * 获取会员信息
  */
 export const GET = unifiedInterfaceProcess(async (req: NextRequest) => {
   try {
@@ -29,21 +29,23 @@ export const GET = unifiedInterfaceProcess(async (req: NextRequest) => {
       throw ApiErrors.BAD_REQUEST("页码和每页数量必须为大于0的数字");
     }
 
-    console.log("准备查询会员信息列表，参数:", { page, limit, skip, userId });
-
     // 构建查询条件
     const query = userId ? { userId } : {};
 
+    // 查询数据
     const memberships = await UserMembershipModel.find(query)
       .sort({ startDate: -1 })
       .skip(skip)
       .limit(limit);
 
-    console.log("查询成功，找到会员记录数:", memberships.length);
-
     const total = await UserMembershipModel.countDocuments(query);
 
     const paginationInfo = createPagination(page, limit, total);
+
+    // 如果是查询单个用户会员信息并且已找到，直接返回第一条记录
+    if (userId && memberships.length > 0) {
+      return successResponse(memberships[0], "获取会员信息成功");
+    }
 
     return paginatedResponse(
       memberships,
@@ -51,7 +53,7 @@ export const GET = unifiedInterfaceProcess(async (req: NextRequest) => {
       "获取会员信息列表成功"
     );
   } catch (error) {
-    console.error("获取会员信息列表出错:", error);
+    console.error("获取会员信息出错:", error);
     throw error;
   }
 });

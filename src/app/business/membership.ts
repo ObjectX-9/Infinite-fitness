@@ -1,19 +1,8 @@
 import { MembershipLevel, UserMembership } from "@/model/user-member/type";
+import { PaginatedResponse } from "@/utils/api-helpers";
 import { request } from "@/utils/request";
 
-interface MembershipResponse {
-  membership: UserMembership;
-}
 
-interface MembershipListResponse {
-  items: UserMembership[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
 
 class MembershipBusiness {
   /**
@@ -21,28 +10,33 @@ class MembershipBusiness {
    */
   async getMembershipByUserId(userId: string): Promise<UserMembership | null> {
     try {
-      const response = await request.get<MembershipListResponse>(
-        `memberships`,
-        { userId }
-      );
-      if (response.data.items && response.data.items.length > 0) {
-        return response.data.items[0];
-      }
-      return null;
+      const response = await request.get<UserMembership>(`memberships?userId=${userId}`);
+      return response.data;
     } catch {
       return null;
     }
   }
 
   /**
+   * 获取会员信息列表
+   * @param page 页码
+   * @param limit 每页数量
+   * @returns 会员信息列表
+   */
+  async getMembershipList(page: number, limit: number): Promise<PaginatedResponse<UserMembership>> {
+    const response = await request.get<PaginatedResponse<UserMembership>>(`memberships?page=${page}&limit=${limit}`);
+    return response.data;
+  }
+
+  /**
    * 创建会员信息
    */
   async createMembership(membershipData: Partial<UserMembership>): Promise<UserMembership> {
-    const response = await request.post<MembershipResponse>(
+    const response = await request.post<UserMembership>(
       "memberships",
       membershipData
     );
-    return response.data.membership;
+    return response.data;
   }
 
   async deleteMembership(userId: string): Promise<void> {
@@ -72,18 +66,18 @@ class MembershipBusiness {
 
     // 如果已有会员信息则更新，否则创建
     if (existingMembership) {
-      const response = await request.put<MembershipResponse>(
+      const response = await request.put<UserMembership>(
         "memberships",
         membershipData
       );
-      return response?.data?.membership;
+      return response?.data;
     } else {
       // 如果不存在会员信息，则创建
-      const response = await request.post<MembershipResponse>(
+      const response = await request.post<UserMembership>(
         "memberships",
         membershipData
       );
-      return response.data.membership;
+      return response.data;
     }
   }
 }
