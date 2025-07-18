@@ -18,7 +18,7 @@ const navItems = [
   { name: "控制台", path: "/admin/dashboard", icon: Home },
   { name: "用户管理", path: "/admin/users", icon: Users },
   { name: "身体部位", path: "/admin/bodyParts", icon: Calendar },
-  { name: "健身工具", path: "/admin/fit-tool", icon: BarChart },
+  { name: "肌肉类型", path: "/admin/muscleTypes", icon: BarChart },
   { name: "健身教程", path: "/admin/fit-tech", icon: BookOpen },
   { name: "健身商城", path: "/admin/fit-mall", icon: ShoppingBag },
   { name: "系统设置", path: "/admin/settings", icon: Settings },
