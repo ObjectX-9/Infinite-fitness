@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
-import { withAuth, isInWhitelist } from "./withAuth";
+import { withAuth, isInWhitelist, UserInfo } from "./withAuth";
 import { withRoleFilter } from "./withRoleFormatter";
 
 /**
@@ -157,7 +157,7 @@ export function errorResponse(
  * @returns 包装后的处理函数
  */
 export function unifiedInterfaceProcess<T extends any[], R>(
-  handler: (req: NextRequest, ...args: T) => Promise<NextResponse<ApiResponse<R>>>
+  handler: (req: NextRequest, useInfo: UserInfo | null, ...args: T) => Promise<NextResponse<ApiResponse<R>>>
 ) {
   return async (req: NextRequest, ...args: T): Promise<NextResponse<ApiResponse<R>>> => {
     try {
@@ -175,7 +175,7 @@ export function unifiedInterfaceProcess<T extends any[], R>(
         return errorResponse(ApiErrors.UNAUTHORIZED("未授权，请先登录"), 401);
       }
 
-      const response = await handler(req, ...args);
+      const response = await handler(req, userInfo, ...args);
       const responseData = await response.json();
 
       // 根据用户信息过滤数据: responseData

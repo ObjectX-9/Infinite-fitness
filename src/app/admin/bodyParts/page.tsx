@@ -47,7 +47,7 @@ export default function BodyPartManagement() {
   const loadBodyParts = async () => {
     setLoading(true);
     try {
-      const params: Record<string, unknown> = { page, limit, isAdmin: true };
+      const params: Record<string, unknown> = { page, limit };
       const result = await bodyPartBusiness.getBodyPartList(params);
       setBodyParts(result.items);
       setFilteredBodyParts(result.items);

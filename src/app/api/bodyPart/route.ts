@@ -9,15 +9,16 @@ import {
   successResponse,
   parseRequestBody,
   RequestValidator,
-  createUpdateFields,
 } from "@/utils/api-helpers";
 import mongoose from "mongoose";
+import { UserInfo } from "@/utils/withAuth";
+import { MembershipLevel } from "@/model/user-member/type";
 
 /**
  * 定义查询条件接口
  */
 interface BodyPartQuery {
-  id?: string;
+  _id?: string;
   userId?: string;
   isCustom?: boolean;
   $or?: Array<{ userId?: string } | { isCustom: boolean }>;
@@ -32,43 +33,20 @@ export const GET = unifiedInterfaceProcess(async (req: NextRequest) => {
     const page = apiParams.getNumber("page") ?? 1;
     const limit = apiParams.getNumber("limit") ?? 10;
     const skip = (page - 1) * limit;
-    const userId = apiParams.getString("userId");
-    const isAdmin = apiParams.getBoolean("isAdmin");
 
     // 参数验证
     if (page < 1 || limit < 1) {
       throw ApiErrors.BAD_REQUEST("页码和每页数量必须为大于0的数字");
     }
 
-    console.log("准备查询身体部位类型列表，参数:", {
-      page,
-      limit,
-      skip,
-      userId,
-      isAdmin,
-    });
-
-    // 构建查询条件
-    const query: BodyPartQuery = {};
-    if (isAdmin) {
-      // 管理员查询所有数据
-      // 不设置任何过滤条件
-    } else if (userId) {
-      // 查询系统预设的和用户自定义的
-      query.$or = [{ userId }, { isCustom: false }];
-    } else {
-      // 只查询系统预设的
-      query.isCustom = false;
-    }
-
-    const bodyParts = await BodyPartTypeModel.find(query)
+    const bodyParts = await BodyPartTypeModel.find()
       .sort({ order: 1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
     console.log("查询成功，找到身体部位类型数:", bodyParts.length);
 
-    const total = await BodyPartTypeModel.countDocuments(query);
+    const total = await BodyPartTypeModel.countDocuments();
 
     const paginationInfo = createPagination(page, limit, total);
 
@@ -86,7 +64,7 @@ export const GET = unifiedInterfaceProcess(async (req: NextRequest) => {
 /**
  * 创建身体部位类型
  */
-export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
+export const POST = unifiedInterfaceProcess(async (req: NextRequest, useInfo: UserInfo | null) => {
   try {
     const bodyPartData = await parseRequestBody(req);
 
@@ -115,8 +93,12 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
       bodyPartData.order = maxOrderRecord ? maxOrderRecord.order + 1 : 1;
     }
 
-    const newBodyPart = new BodyPartTypeModel(bodyPartData);
-    await newBodyPart.save();
+    const saveBodyPartData = {
+      ...bodyPartData,
+      userId: useInfo?.userId,
+    };
+
+    const newBodyPart = await BodyPartTypeModel.create(saveBodyPartData);
 
     return successResponse(newBodyPart, "创建身体部位类型成功");
   } catch (error) {
@@ -128,22 +110,27 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest) => {
 /**
  * 删除身体部位类型
  */
-export const DELETE = unifiedInterfaceProcess(async (req: NextRequest) => {
+export const DELETE = unifiedInterfaceProcess(async (req: NextRequest, useInfo: UserInfo | null) => {
   const apiParams = createApiParams(req);
   const bodyPartId = apiParams.getString("id");
-  const userId = apiParams.getString("userId");
 
   // 参数验证
   if (!bodyPartId) {
     throw ApiErrors.BAD_REQUEST("缺少必要参数: id");
   }
 
+  const userId = useInfo?.userId;
+  const isAdmin = useInfo?.membershipLevel === MembershipLevel.ADMIN;
+
   // 构建查询条件，确保只能删除自己创建的自定义部位
-  const query: BodyPartQuery = { id: bodyPartId };
-  if (userId) {
+  const query: BodyPartQuery = { _id: bodyPartId };
+  if (isAdmin) {
+    // 管理员可以删除任意数据
+  } else {
     query.userId = userId;
     query.isCustom = true;
   }
+  console.log('✅ ✅ ✅ ~  DELETE ~  query:', query);
 
   const result = await BodyPartTypeModel.deleteOne(query);
 
@@ -161,24 +148,17 @@ export const PUT = unifiedInterfaceProcess(async (req: NextRequest) => {
   const bodyPartInfo = await parseRequestBody(req);
 
   RequestValidator.validateRequired(bodyPartInfo, ["id"]);
-  const { id, userId } = bodyPartInfo;
+  const { id } = bodyPartInfo;
 
   // 构建查询条件，确保只能更新自己创建的自定义部位或管理员可更新所有
-  const query: BodyPartQuery = { id };
-  if (userId) {
-    query.userId = userId;
-    query.isCustom = true;
-  }
+  const query: BodyPartQuery = { _id: id };
 
   // 更新时间
   bodyPartInfo.updatedAt = new Date();
 
-  // 使用公用方法自动创建更新字段对象
-  const updateFields = createUpdateFields(bodyPartInfo);
-
   const bodyPart = await BodyPartTypeModel.findOneAndUpdate(
     query,
-    { $set: updateFields },
+    { $set: bodyPartInfo },
     { new: true }
   );
 
