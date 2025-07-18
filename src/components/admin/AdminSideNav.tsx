@@ -22,6 +22,7 @@ const navItems = [
   { name: "训练目标", path: "/admin/fitnessGoals", icon: BarChart },
   { name: "使用场景", path: "/admin/usageScenarios", icon: BarChart },
   { name: "健身器械", path: "/admin/fitnessEquipments", icon: BarChart },
+  { name: "训练动作", path: "/admin/exerciseItems", icon: BarChart },
   { name: "健身教程", path: "/admin/fit-tech", icon: BookOpen },
   { name: "健身商城", path: "/admin/fit-mall", icon: ShoppingBag },
   { name: "系统设置", path: "/admin/settings", icon: Settings },
