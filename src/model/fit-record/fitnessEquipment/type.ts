@@ -13,7 +13,7 @@ export enum EquipmentCategory {
   // 拉伸辅助
   STRETCHING = "stretching",
   // 其他
-  OTHER = "other"
+  OTHER = "other",
 }
 
 /**
@@ -24,32 +24,37 @@ export interface FitnessEquipment {
    * 唯一标识符
    */
   _id: string;
-  
+
   /**
    * 器械名称
    */
   name: string;
-  
+
   /**
    * 器械描述
    */
   description: string;
-  
+
   /**
    * 器械图片链接数组
    */
   imageUrls: string[];
 
   /**
+   * 器械视频链接数组
+   */
+  videoUrls: string[];
+
+  /**
    * 器械类别
    */
   category: EquipmentCategory;
-  
+
   /**
    * 主要锻炼肌群ID数组
    */
   targetMusclesIds: string[];
-  
+
   /**
    * 适合的健身目标ID数组
    */
@@ -59,12 +64,12 @@ export interface FitnessEquipment {
    * 使用指南
    */
   usageInstructions: string[];
-  
+
   /**
    * 安全提示
    */
   safetyTips: string;
-  
+
   /**
    * 使用场景ID数组
    */
@@ -74,12 +79,12 @@ export interface FitnessEquipment {
    * 推荐的训练动作ID列表
    */
   recommendedExercisesIds?: string[];
-  
+
   /**
    * 替代器械ID列表
    */
   alternativesIds?: string[];
-  
+
   /**
    * 特点和优势
    */
@@ -89,27 +94,27 @@ export interface FitnessEquipment {
    * 创建时间
    */
   createdAt: Date;
-  
+
   /**
    * 更新时间
    */
   updatedAt: Date;
-  
+
   /**
    * 是否为自定义器械
    */
   isCustom?: boolean;
-  
+
   /**
    * 创建用户ID
    */
   userId?: string;
-  
+
   /**
    * 备注
    */
   notes?: string;
-  
+
   /**
    * 排序
    */
@@ -117,4 +122,3 @@ export interface FitnessEquipment {
 }
 // 器械库类型
 export type EquipmentLibrary = Record<string, FitnessEquipment>;
-

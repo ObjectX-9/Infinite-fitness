@@ -75,6 +75,26 @@ class UploadBusiness {
   }
 
   /**
+   * 上传健身器材图片
+   * @param file 文件对象
+   * @param fileTypeCheck 可选，文件类型检查（逗号分隔的列表）
+   * @returns 上传结果，包含URL和文件名
+   */
+  async uploadFitnessEquipmentImage(file: File, fileTypeCheck?: string) {
+    return uploadFile(file, "fitness-equipment-images", fileTypeCheck);
+  }
+
+  /**
+   * 上传健身器材视频
+   * @param file 文件对象
+   * @param fileTypeCheck 可选，文件类型检查（逗号分隔的列表）
+   * @returns 上传结果，包含URL和文件名
+   */
+  async uploadFitnessEquipmentVideo(file: File, fileTypeCheck?: string) {
+    return uploadFile(file, "fitness-equipment-videos", fileTypeCheck);
+  }
+
+  /**
    * 上传文件（通用方法）
    * @param formData 表单数据，包含文件
    * @returns 上传结果，包含URL和文件名

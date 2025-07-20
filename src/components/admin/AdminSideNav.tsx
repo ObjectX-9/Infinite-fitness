@@ -13,6 +13,7 @@ import {
   FileUser,
   Goal,
   LayoutDashboard,
+  Shapes,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -24,7 +25,7 @@ const navItems = [
   { name: "肌肉类型", path: "/admin/muscleTypes", icon: BicepsFlexed },
   { name: "训练目标", path: "/admin/fitnessGoals", icon: Goal },
   { name: "使用场景", path: "/admin/usageScenarios", icon: LayoutDashboard },
-  { name: "健身器械", path: "/admin/fitnessEquipments", icon: BarChart },
+  { name: "健身器械", path: "/admin/fitnessEquipments", icon: Shapes },
   { name: "训练动作", path: "/admin/exerciseItems", icon: BarChart },
   { name: "健身教程", path: "/admin/fit-tech", icon: BookOpen },
   { name: "健身商城", path: "/admin/fit-mall", icon: ShoppingBag },
