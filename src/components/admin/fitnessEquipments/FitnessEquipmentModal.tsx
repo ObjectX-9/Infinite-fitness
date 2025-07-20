@@ -33,6 +33,8 @@ import {
 } from "@/model/fit-record/BodyType/muscleType/type";
 import { getMuscleTypeLabel } from "@/components/admin/muscleTypes/const";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { fitnessGoalBusiness } from "@/app/business/fitnessGoal";
+import { FitnessGoal } from "@/model/fit-record/ExerciseItem/fitnessGoal/type";
 
 interface FitnessEquipmentModalProps {
   isOpen: boolean;
@@ -125,6 +127,10 @@ export function FitnessEquipmentModal({
   const [muscleTypes, setMuscleTypes] = useState<MuscleType[]>([]);
   const [loadingMuscleTypes, setLoadingMuscleTypes] = useState(false);
 
+  // 健身目标列表
+  const [fitnessGoals, setFitnessGoals] = useState<FitnessGoal[]>([]);
+  const [loadingFitnessGoals, setLoadingFitnessGoals] = useState(false);
+
   /**
    * 加载肌肉类型数据
    */
@@ -140,6 +146,24 @@ export function FitnessEquipmentModal({
       toast.error("获取肌肉类型失败");
     } finally {
       setLoadingMuscleTypes(false);
+    }
+  };
+
+  /**
+   * 加载健身目标数据
+   */
+  const loadFitnessGoals = async () => {
+    setLoadingFitnessGoals(true);
+    try {
+      const result = await fitnessGoalBusiness.getFitnessGoalList({
+        limit: 100, // 获取足够多的健身目标
+      });
+      setFitnessGoals(result.items);
+    } catch (error) {
+      console.error("获取健身目标失败:", error);
+      toast.error("获取健身目标失败");
+    } finally {
+      setLoadingFitnessGoals(false);
     }
   };
 
@@ -459,6 +483,27 @@ export function FitnessEquipmentModal({
     updateFitnessEquipment("targetMusclesIds", newTargetMuscles);
   };
 
+  /**
+   * 处理健身目标选择变更
+   * @param goalId 健身目标ID
+   * @param checked 是否选中
+   */
+  const handleFitnessGoalChange = (goalId: string, checked: boolean) => {
+    let newFitnessGoals = [...(fitnessEquipment.fitnessGoalsIds || [])];
+
+    if (checked) {
+      // 添加健身目标
+      if (!newFitnessGoals.includes(goalId)) {
+        newFitnessGoals.push(goalId);
+      }
+    } else {
+      // 移除健身目标
+      newFitnessGoals = newFitnessGoals.filter((id) => id !== goalId);
+    }
+
+    updateFitnessEquipment("fitnessGoalsIds", newFitnessGoals);
+  };
+
   // 获取所有器械类别选项
   const categoryOptions = fitnessEquipmentBusiness.getEquipmentCategories();
 
@@ -470,10 +515,11 @@ export function FitnessEquipmentModal({
     }
   }, [isOpen, fitnessEquipment.imageUrls, fitnessEquipment.videoUrls]);
 
-  // 组件挂载时加载肌肉类型数据
+  // 组件挂载时加载肌肉类型和健身目标数据
   useEffect(() => {
     if (isOpen) {
       loadMuscleTypes();
+      loadFitnessGoals();
     }
   }, [isOpen]);
 
@@ -695,23 +741,73 @@ export function FitnessEquipmentModal({
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fitnessGoalsIds" className="text-right">
-                健身目标IDs
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="fitnessGoalsIds" className="text-right pt-2">
+                健身目标
               </Label>
-              <Input
-                id="fitnessGoalsIds"
-                value={
-                  fitnessEquipment.fitnessGoalsIds
-                    ? fitnessEquipment.fitnessGoalsIds.join(", ")
-                    : ""
-                }
-                onChange={(e) =>
-                  handleArrayIdsChange("fitnessGoalsIds", e.target.value)
-                }
-                placeholder="健身目标ID，多个请用逗号分隔"
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <div className="border rounded-md p-4 h-[200px]">
+                  <ScrollArea className="h-full pr-4">
+                    <div className="grid gap-6">
+                      {loadingFitnessGoals ? (
+                        <div className="text-center py-2">
+                          加载健身目标中...
+                        </div>
+                      ) : (
+                        <>
+                          {/* 自定义健身目标 */}
+                          {fitnessGoals.filter((g) => g.isCustom).length >
+                            0 && (
+                            <div className="space-y-2">
+                              <h3 className="font-medium text-sm">
+                                自定义目标
+                              </h3>
+                              <div className="grid grid-cols-2 gap-2">
+                                {fitnessGoals
+                                  .filter((g) => g.isCustom)
+                                  .map((goal) => {
+                                    const isChecked =
+                                      fitnessEquipment.fitnessGoalsIds?.includes(
+                                        goal._id
+                                      ) || false;
+
+                                    return (
+                                      <div
+                                        key={goal._id}
+                                        className="flex items-center space-x-2"
+                                      >
+                                        <Checkbox
+                                          id={`goal-${goal._id}`}
+                                          checked={isChecked}
+                                          onCheckedChange={(checked) =>
+                                            handleFitnessGoalChange(
+                                              goal._id,
+                                              !!checked
+                                            )
+                                          }
+                                        />
+                                        <label
+                                          htmlFor={`goal-${goal._id}`}
+                                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                          {goal.name}
+                                        </label>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  已选择 {fitnessEquipment.fitnessGoalsIds?.length || 0}{" "}
+                  个健身目标
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="usageScenariosIds" className="text-right">
