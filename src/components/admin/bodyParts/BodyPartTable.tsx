@@ -1,7 +1,4 @@
-import {
-  BodyPartType,
-  EBodyPartTypeCategory,
-} from "@/model/fit-record/BodyType/bodyPartType/type";
+import { BodyPartType } from "@/model/fit-record/BodyType/bodyPartType/type";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -19,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import { getCategoryLabel } from "./const";
 
 /**
  * 身体部位表格组件：展示身体部位列表数据
@@ -47,23 +45,6 @@ export function BodyPartTable({
   onEdit,
   onDelete,
 }: BodyPartTableProps) {
-  /**
-   * 获取类别中文名称
-   */
-  const getCategoryLabel = (category: EBodyPartTypeCategory | string) => {
-    const categoryMap = {
-      [EBodyPartTypeCategory.CHEST]: "胸部",
-      [EBodyPartTypeCategory.BACK]: "背部",
-      [EBodyPartTypeCategory.ARM]: "手臂",
-      [EBodyPartTypeCategory.LEG]: "腿部",
-      [EBodyPartTypeCategory.ABDOMEN]: "腹部",
-      [EBodyPartTypeCategory.HIPS]: "臀部",
-      [EBodyPartTypeCategory.NECK]: "颈部",
-      [EBodyPartTypeCategory.SHOULDER]: "肩部",
-    };
-    return categoryMap[category as EBodyPartTypeCategory] || category;
-  };
-
   return (
     <div className="rounded-md border">
       <Table>

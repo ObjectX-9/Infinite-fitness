@@ -1,23 +1,32 @@
-"use client"
+/**
+ * 功能：底部导航栏组件
+ */
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  Home, 
-  Calendar, 
-  BarChart, 
-  Book, 
-  ShoppingBag
-} from 'lucide-react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Home,
+  Calendar,
+  BarChart,
+  Book,
+  ShoppingBag,
+  Activity,
+} from "lucide-react";
 
 const navItems = [
-  { name: '首页', path: '/', icon: Home },
-  { name: '记录', path: '/fit-record', icon: Calendar },
-  { name: '工具', path: '/fit-tool', icon: BarChart },
-  { name: '教程', path: '/fit-tech', icon: Book },
-  { name: '商城', path: '/fit-mall', icon: ShoppingBag },
+  { name: "首页", path: "/", icon: Home },
+  { name: "记录", path: "/fit-record", icon: Calendar },
+  { name: "身体地图", path: "/body-map", icon: Activity },
+  { name: "工具", path: "/fit-tool", icon: BarChart },
+  { name: "教程", path: "/fit-tech", icon: Book },
+  { name: "商城", path: "/fit-mall", icon: ShoppingBag },
 ];
 
+/**
+ * 底部导航栏组件
+ * @returns 底部导航栏组件
+ */
 export function BottomNav() {
   const pathname = usePathname();
 
@@ -27,17 +36,19 @@ export function BottomNav() {
         {navItems.map((item) => {
           const isActive = pathname === item.path;
           const Icon = item.icon;
-          
+
           return (
-            <Link 
-              key={item.path} 
-              href={item.path} 
+            <Link
+              key={item.path}
+              href={item.path}
               className={`flex flex-col items-center justify-center w-full h-full
-                ${isActive 
-                  ? 'text-blue-500 dark:text-blue-400' 
-                  : 'text-gray-500 dark:text-gray-400'}`}
+                ${
+                  isActive
+                    ? "text-blue-500 dark:text-blue-400"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
             >
-              <Icon size={20} className={isActive ? 'animate-pulse' : ''} />
+              <Icon size={20} className={isActive ? "animate-pulse" : ""} />
               <span className="text-xs mt-1">{item.name}</span>
             </Link>
           );
@@ -45,4 +56,4 @@ export function BottomNav() {
       </div>
     </div>
   );
-} 
+}

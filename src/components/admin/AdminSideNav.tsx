@@ -9,7 +9,10 @@ import {
   BarChart,
   ShoppingBag,
   BookOpen,
-  Calendar,
+  BicepsFlexed,
+  FileUser,
+  Goal,
+  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -17,10 +20,10 @@ import { Button } from "../ui/button";
 const navItems = [
   { name: "控制台", path: "/admin/dashboard", icon: Home },
   { name: "用户管理", path: "/admin/users", icon: Users },
-  { name: "身体部位", path: "/admin/bodyParts", icon: Calendar },
-  { name: "肌肉类型", path: "/admin/muscleTypes", icon: BarChart },
-  { name: "训练目标", path: "/admin/fitnessGoals", icon: BarChart },
-  { name: "使用场景", path: "/admin/usageScenarios", icon: BarChart },
+  { name: "身体部位", path: "/admin/bodyParts", icon: FileUser },
+  { name: "肌肉类型", path: "/admin/muscleTypes", icon: BicepsFlexed },
+  { name: "训练目标", path: "/admin/fitnessGoals", icon: Goal },
+  { name: "使用场景", path: "/admin/usageScenarios", icon: LayoutDashboard },
   { name: "健身器械", path: "/admin/fitnessEquipments", icon: BarChart },
   { name: "训练动作", path: "/admin/exerciseItems", icon: BarChart },
   { name: "健身教程", path: "/admin/fit-tech", icon: BookOpen },

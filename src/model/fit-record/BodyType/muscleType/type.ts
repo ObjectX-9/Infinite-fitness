@@ -50,44 +50,53 @@ export interface MuscleType {
 }
 
 export enum EMuscleTypeCategory {
-  /**
-   * 胸大肌
-   */
-  PECTORALIS_MAJOR = "pectoralis_major",
-  /**
-   * 背阔肌
-   */
-  LATISSIMUS_DORSI = "latissimus_dorsi",
-  /**
-   * 二头肌
-   */
-  BICEPS = "biceps",
-  /**
-   * 三头肌
-   */
-  TRICEPS = "triceps",
-  /**
-   * 腹直肌
-   */
-  RECTUS_ABDOMINIS = "rectus_abdominis",
-  /**
-   * 股四头肌
-   */
-  QUADRICEPS = "quadriceps",
-  /**
-   * 腘绳肌
-   */
-  HAMSTRINGS = "hamstrings",
-  /**
-   * 小腿肌群
-   */
-  CALVES = "calves",
-  /**
-   * 三角肌
-   */
-  DELTOIDS = "deltoids",
-  /**
-   * 斜方肌
-   */
-  TRAPEZIUS = "trapezius",
+  // ============肩膀============
+  // 前（前）三角肌：前束
+  SHOULDER_FRONT = "SHOULDER_FRONT",
+  // 横向三角肌：中束
+  SHOULDER_MIDDLE = "SHOULDER_MIDDLE",
+  // 后（后）三角肌：后束
+  SHOULDER_BACK = "SHOULDER_BACK",
+
+  // ============胸部============
+  // 胸大肌
+  CHEST_MAJOR = "CHEST_MAJOR",
+  // 小胸大肌
+  CHEST_MINOR = "CHEST_MINOR",
+
+  // ============腹部============
+  // 腹直肌
+  ABDOMEN_RECTUS = "ABDOMEN_RECTUS",
+  // 腹斜肌
+  ABDOMEN_OBLEQUE = "ABDOMEN_OBLEQUE",
+
+  // ============腿部============
+  // 股四头肌
+  LEG_QUADRICEPS = "LEG_QUADRICEPS",
+  // 小腿三头肌
+  LEG_TRICEPS = "LEG_TRICEPS",
+  // 腘绳肌
+  LEG_HAMSTRINGS = "LEG_HAMSTRINGS",
+
+  // ============手臂============
+  // 肱二头肌
+  ARM_BICEP = "ARM_BICEP",
+  // 肱三头肌
+  ARM_TRICEP = "ARM_TRICEP",
+  // 前臂
+  ARM_FOREARM = "ARM_FOREARM",
+
+  // ============臀部============
+  // 臀部
+  HIP_GLUTEUS = "HIP_GLUTEUS",
+
+  // ============背部============
+  // 斜方肌
+  BACK_SCAPULARIS = "BACK_SCAPULARIS",
+  // 后背中部斜方肌
+  BACK_MIDDLE_SCAPULARIS = "BACK_MIDDLE_SCAPULARIS",
+  // 背阔肌
+  BACK_BICEP = "BACK_BICEP",
+  // 竖脊肌
+  BACK_LUMBARIS = "BACK_LUMBARIS",
 }

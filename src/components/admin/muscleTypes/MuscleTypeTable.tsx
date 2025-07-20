@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { MuscleType } from "@/model/fit-record/BodyType/muscleType/type";
 import { BodyPartType } from "@/model/fit-record/BodyType/bodyPartType/type";
+import { getMuscleTypeLabel } from "./const";
+import { getCategoryLabel } from "@/components/admin/bodyParts/const";
 
 interface MuscleTypeTableProps {
   muscleTypes: MuscleType[];
@@ -28,9 +30,9 @@ export function MuscleTypeTable({
    * @returns 身体部位名称
    */
   const getBodyPartName = (bodyPartId?: string) => {
-    if (!bodyPartId) return '-';
-    const bodyPart = bodyParts.find(bp => bp._id === bodyPartId);
-    return bodyPart ? bodyPart.name : '-';
+    if (!bodyPartId) return "-";
+    const bodyPart = bodyParts.find((bp) => bp._id === bodyPartId);
+    return bodyPart ? getCategoryLabel(bodyPart.name) : "-";
   };
 
   return (
@@ -62,11 +64,32 @@ export function MuscleTypeTable({
           ) : (
             muscleTypes.map((muscleType) => (
               <tr key={muscleType._id} className="border-b">
-                <td className="p-2">{muscleType.name}</td>
-                <td className="p-2">{muscleType.description}</td>
-                <td className="p-2">{getBodyPartName(muscleType.bodyPartId)}</td>
+                <td className="p-2 max-w-[150px]">
+                  <div
+                    className="overflow-hidden text-ellipsis whitespace-nowrap"
+                    title={getMuscleTypeLabel(muscleType.name)}
+                  >
+                    {getMuscleTypeLabel(muscleType.name)}
+                  </div>
+                </td>
+                <td className="p-2 max-w-[200px]">
+                  <div
+                    className="overflow-hidden text-ellipsis whitespace-nowrap"
+                    title={muscleType.description}
+                  >
+                    {muscleType.description}
+                  </div>
+                </td>
+                <td className="p-2 max-w-[150px]">
+                  <div
+                    className="overflow-hidden text-ellipsis whitespace-nowrap"
+                    title={getBodyPartName(muscleType.bodyPartId)}
+                  >
+                    {getBodyPartName(muscleType.bodyPartId)}
+                  </div>
+                </td>
                 <td className="p-2">{muscleType.order}</td>
-                <td className="p-2">{muscleType.isCustom ? '是' : '否'}</td>
+                <td className="p-2">{muscleType.isCustom ? "是" : "否"}</td>
                 <td className="p-2 text-center">
                   <div className="flex justify-center space-x-2">
                     <Button
@@ -92,4 +115,4 @@ export function MuscleTypeTable({
       </table>
     </div>
   );
-} 
+}

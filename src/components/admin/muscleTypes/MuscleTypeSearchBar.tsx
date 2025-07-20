@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { BodyPartType } from "@/model/fit-record/BodyType/bodyPartType/type";
+import { getCategoryLabel } from "@/components/admin/bodyParts/const";
 
 interface MuscleTypeSearchBarProps {
   keyword: string;
@@ -36,7 +37,7 @@ export function MuscleTypeSearchBar({
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+            onKeyDown={(e) => e.key === "Enter" && onSearch()}
           />
           <Button onClick={onSearch}>搜索</Button>
         </div>
@@ -53,11 +54,11 @@ export function MuscleTypeSearchBar({
           <option value="">全部部位</option>
           {bodyParts.map((bodyPart) => (
             <option key={bodyPart._id} value={bodyPart._id}>
-              {bodyPart.name}
+              {getCategoryLabel(bodyPart.name)}
             </option>
           ))}
         </select>
       </div>
     </div>
   );
-} 
+}
