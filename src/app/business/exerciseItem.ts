@@ -1,4 +1,4 @@
-import { BaseExerciseItem } from "@/model/fit-record/ExerciseItem/type";
+import { BaseExerciseItem, DifficultyLevel } from "@/model/fit-record/ExerciseItem/type";
 import { request } from "@/utils/request";
 
 /**
@@ -88,6 +88,32 @@ class ExerciseItemBusiness {
   async getExerciseItemDetail(id: string): Promise<BaseExerciseItem> {
     const response = await request.get<ExerciseItemResponse>(`exerciseItem?id=${id}`);
     return response.data.exerciseItem;
+  }
+
+  /**
+   * 获取难度级别选项
+   * @returns 难度级别选项列表
+   */
+  getDifficultyLevels(): { value: string; label: string }[] {
+    return [
+      { value: DifficultyLevel.EASY, label: '简单' },
+      { value: DifficultyLevel.MEDIUM, label: '中等' },
+      { value: DifficultyLevel.HARD, label: '困难' },
+    ];
+  }
+
+  /**
+   * 获取难度级别显示名称
+   * @param difficulty 难度级别
+   * @returns 难度级别显示名称
+   */
+  getDifficultyLabel(difficulty: string): string {
+    const difficultyMap: Record<string, string> = {
+      [DifficultyLevel.EASY]: '简单',
+      [DifficultyLevel.MEDIUM]: '中等',
+      [DifficultyLevel.HARD]: '困难',
+    };
+    return difficultyMap[difficulty] || '未知难度';
   }
 }
 

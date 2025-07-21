@@ -16,7 +16,7 @@ export enum DifficultyLevel {
 
 export interface BaseExerciseItem {
   // 基本信息
-  id: string; // 唯一标识符
+  _id: string; // 唯一标识符
   name: string; // 动作名称
   description: string; // 动作简介
   videoUrl?: string; // 动作实操视频链接
@@ -40,7 +40,7 @@ export interface BaseExerciseItem {
   // 额外信息
   tips?: string[]; // 动作注意事项
   commonMistakes?: string[]; // 常见错误
-  alternatives?: string[]; // 替代动作
+  alternativeExerciseItemIds?: string[]; // 替代动作
   caloriesBurned?: number; // 估计卡路里消耗(每组)
 
 
@@ -51,7 +51,6 @@ export interface BaseExerciseItem {
   createdAt: Date; // 创建时间
   updatedAt?: Date; // 更新时间
   userId?: string; // 创建者ID
-  notes?: string; // 个人笔记
 }
 
 

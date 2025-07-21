@@ -32,13 +32,12 @@ const exerciseItemSchema = new Schema<BaseExerciseItem>({
   // 额外信息
   tips: { type: [String], required: false },
   commonMistakes: { type: [String], required: false },
-  alternatives: { type: [String], required: false },
+  alternativeExerciseItemIds: { type: [String], required: false },
   caloriesBurned: { type: Number, required: false },
 
   // 自定义数据
   isCustom: { type: Boolean, default: false },
   userId: { type: String, required: false },
-  notes: { type: String, required: false },
   createdAt: { type: Date, required: true },
   updatedAt: { type: Date, required: false },
 }, {

@@ -7,7 +7,6 @@ import { BaseExerciseItem, DifficultyLevel } from "@/model/fit-record/ExerciseIt
 import { FitnessGoal } from "@/model/fit-record/ExerciseItem/fitnessGoal/type";
 import { MuscleType } from "@/model/fit-record/BodyType/muscleType/type";
 import { UsageScenario } from "@/model/fit-record/ExerciseItem/usageScenarios/type";
-import { FitnessEquipment } from "@/model/fit-record/fitnessEquipment/type";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import {
@@ -25,6 +24,8 @@ import {
   ExerciseItemSearchBar,
   ExerciseItemPagination,
 } from "@/components/admin/exerciseItems";
+import { muscleTypeBusiness } from "@/app/business/muscleType";
+import { usageScenarioBusiness } from "@/app/business/usageScenario";
 
 /**
  * 训练动作管理页面：管理系统训练动作
@@ -45,7 +46,6 @@ export default function ExerciseItemManagement() {
   const [muscleTypes, setMuscleTypes] = useState<MuscleType[]>([]);
   const [fitnessGoals, setFitnessGoals] = useState<FitnessGoal[]>([]);
   const [usageScenarios, setUsageScenarios] = useState<UsageScenario[]>([]);
-  const [fitnessEquipments, setFitnessEquipments] = useState<FitnessEquipment[]>([]);
   const [loadingDependencies, setLoadingDependencies] = useState(false);
 
   // 创建/编辑对话框状态
@@ -60,15 +60,13 @@ export default function ExerciseItemManagement() {
     setLoadingDependencies(true);
     try {
       // 这里需要替换为实际的业务方法
-      const muscleTypesResult = await fetch('/api/muscleType?limit=100').then(res => res.json());
+      const muscleTypesResult = await muscleTypeBusiness.getMuscleTypeList({ limit: 100 });
       const fitnessGoalsResult = await fitnessGoalBusiness.getFitnessGoalList({ limit: 100 });
-      const usageScenariosResult = await fetch('/api/usageScenario?limit=100').then(res => res.json());
-      const fitnessEquipmentsResult = await fetch('/api/fitnessEquipment?limit=100').then(res => res.json());
+      const usageScenariosResult = await usageScenarioBusiness.getUsageScenarioList({ limit: 100 });
 
       setMuscleTypes(muscleTypesResult.items || []);
       setFitnessGoals(fitnessGoalsResult.items || []);
       setUsageScenarios(usageScenariosResult.items || []);
-      setFitnessEquipments(fitnessEquipmentsResult.items || []);
     } catch (error) {
       toast.error("获取基础数据失败", {
         description: "请稍后再试或联系管理员",
@@ -183,7 +181,7 @@ export default function ExerciseItemManagement() {
 
       if (isEditMode) {
         await exerciseItemBusiness.updateExerciseItem(
-          exerciseItem.id!,
+          exerciseItem._id!,
           exerciseItem
         );
         toast.success("更新成功", {
@@ -253,6 +251,11 @@ export default function ExerciseItemManagement() {
     loadExerciseItems();
   }, [page, limit]);
 
+  // 难度或关键词变更时进行过滤
+  useEffect(() => {
+    handleSearch();
+  }, [difficulty, keyword]);
+
   return (
     <div className="container mx-auto py-6">
       <Card>
@@ -298,20 +301,17 @@ export default function ExerciseItemManagement() {
       </Card>
 
       {/* 创建/编辑对话框 */}
-      {isDialogOpen && (
-        <ExerciseItemModal
-          isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          isEditMode={isEditMode}
-          exerciseItem={currentExerciseItem}
-          onExerciseItemChange={setCurrentExerciseItem}
-          onSubmit={handleSubmit}
-          muscleTypes={muscleTypes}
-          fitnessGoals={fitnessGoals}
-          usageScenarios={usageScenarios}
-          fitnessEquipments={fitnessEquipments}
-        />
-      )}
+      <ExerciseItemModal
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        isEditMode={isEditMode}
+        exerciseItem={currentExerciseItem}
+        onExerciseItemChange={setCurrentExerciseItem}
+        onSubmit={handleSubmit}
+        muscleTypes={muscleTypes}
+        fitnessGoals={fitnessGoals}
+        usageScenarios={usageScenarios}
+      />
     </div>
   );
 } 

@@ -8,8 +8,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Eye } from "lucide-react";
+import { Edit, Trash2, Eye, FileVideo } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 interface ExerciseItemTableProps {
   exerciseItems: BaseExerciseItem[];
@@ -35,7 +36,6 @@ const difficultyLabels: Record<DifficultyLevel, { label: string; variant: "defau
  */
 export function ExerciseItemTable({
   exerciseItems,
-  loading,
   onEdit,
   onDelete,
   onView,
@@ -48,27 +48,6 @@ export function ExerciseItemTable({
     return <Badge variant={variant}>{label}</Badge>;
   };
 
-  /**
-   * 获取训练动作分类摘要
-   */
-  const getTruncatedList = (list: string[] | undefined, maxItems = 1) => {
-    if (!list || list.length === 0) return "无";
-    
-    if (list.length <= maxItems) {
-      return list.join(", ");
-    }
-    
-    return `${list.slice(0, maxItems).join(", ")} 等${list.length}项`;
-  };
-
-  if (loading) {
-    return <div className="text-center py-8">加载中...</div>;
-  }
-
-  if (!exerciseItems || exerciseItems.length === 0) {
-    return <div className="text-center py-8">暂无训练动作数据</div>;
-  }
-
   return (
     <div className="rounded-md border">
       <Table>
@@ -76,30 +55,45 @@ export function ExerciseItemTable({
           <TableRow>
             <TableHead>名称</TableHead>
             <TableHead>难度</TableHead>
-            <TableHead className="hidden md:table-cell">目标肌群</TableHead>
-            <TableHead className="hidden md:table-cell">器械类型</TableHead>
-            <TableHead className="hidden lg:table-cell">健身目标</TableHead>
-            <TableHead className="hidden lg:table-cell">使用场景</TableHead>
+            <TableHead>媒体</TableHead>
+            <TableHead>动作描述</TableHead>
             <TableHead className="text-right">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {exerciseItems.map((item) => (
-            <TableRow key={item.id}>
+            <TableRow key={item._id}>
               <TableCell className="font-medium">{item.name}</TableCell>
               <TableCell>{getDifficultyBadge(item.difficulty)}</TableCell>
-              <TableCell className="hidden md:table-cell">
-                {getTruncatedList(item.muscleTypeIds, 2)}
+              <TableCell>
+                <div className="flex items-center space-x-2">
+                  {item.imageUrls && item.imageUrls.length > 0 && (
+                    <div className="relative h-10 w-10 overflow-hidden rounded-md border">
+                      <Image
+                        src={item.imageUrls[0]}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                      {item.imageUrls.length > 1 && (
+                        <span className="absolute bottom-0 right-0 rounded-tl-sm bg-background/80 px-1 text-xs">
+                          +{item.imageUrls.length - 1}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {item.videoUrl && (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-md border bg-muted">
+                      <FileVideo className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  {(!item.imageUrls || item.imageUrls.length === 0) && !item.videoUrl && (
+                    <span className="text-xs text-muted-foreground">无媒体</span>
+                  )}
+                </div>
               </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {item.equipmentTypeId || "未指定"}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {getTruncatedList(item.fitnessGoalsIds, 1)}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {getTruncatedList(item.usageScenariosIds, 1)}
-              </TableCell>
+              <TableCell>{item.description}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   {onView && (
@@ -123,7 +117,7 @@ export function ExerciseItemTable({
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => onDelete(item.id)}
+                    onClick={() => onDelete(item._id)}
                     title="删除"
                   >
                     <Trash2 className="h-4 w-4" />
