@@ -29,12 +29,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { muscleTypeBusiness } from "@/app/business/muscleType";
 import {
   MuscleType,
-  EMuscleTypeCategory,
 } from "@/model/fit-record/BodyType/muscleType/type";
 import { getMuscleTypeLabel } from "@/components/admin/muscleTypes/const";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fitnessGoalBusiness } from "@/app/business/fitnessGoal";
 import { FitnessGoal } from "@/model/fit-record/ExerciseItem/fitnessGoal/type";
+import { usageScenarioBusiness } from "@/app/business/usageScenario";
+import { UsageScenario } from "@/model/fit-record/ExerciseItem/usageScenarios/type";
+import { Plus, Trash2 } from "lucide-react";
 
 interface FitnessEquipmentModalProps {
   isOpen: boolean;
@@ -46,58 +48,6 @@ interface FitnessEquipmentModalProps {
   ) => void;
   onSubmit: (fitnessEquipment: Partial<FitnessEquipment>) => void;
 }
-
-// 按身体部位分组的肌肉类型
-const muscleGroups = [
-  {
-    label: "肩部",
-    items: [
-      EMuscleTypeCategory.SHOULDER_FRONT,
-      EMuscleTypeCategory.SHOULDER_MIDDLE,
-      EMuscleTypeCategory.SHOULDER_BACK,
-    ],
-  },
-  {
-    label: "胸部",
-    items: [EMuscleTypeCategory.CHEST_MAJOR, EMuscleTypeCategory.CHEST_MINOR],
-  },
-  {
-    label: "腹部",
-    items: [
-      EMuscleTypeCategory.ABDOMEN_RECTUS,
-      EMuscleTypeCategory.ABDOMEN_OBLEQUE,
-    ],
-  },
-  {
-    label: "腿部",
-    items: [
-      EMuscleTypeCategory.LEG_QUADRICEPS,
-      EMuscleTypeCategory.LEG_TRICEPS,
-      EMuscleTypeCategory.LEG_HAMSTRINGS,
-    ],
-  },
-  {
-    label: "手臂",
-    items: [
-      EMuscleTypeCategory.ARM_BICEP,
-      EMuscleTypeCategory.ARM_TRICEP,
-      EMuscleTypeCategory.ARM_FOREARM,
-    ],
-  },
-  {
-    label: "臀部",
-    items: [EMuscleTypeCategory.HIP_GLUTEUS],
-  },
-  {
-    label: "背部",
-    items: [
-      EMuscleTypeCategory.BACK_SCAPULARIS,
-      EMuscleTypeCategory.BACK_MIDDLE_SCAPULARIS,
-      EMuscleTypeCategory.BACK_BICEP,
-      EMuscleTypeCategory.BACK_LUMBARIS,
-    ],
-  },
-];
 
 /**
  * 健身器械编辑对话框组件
@@ -130,6 +80,10 @@ export function FitnessEquipmentModal({
   // 健身目标列表
   const [fitnessGoals, setFitnessGoals] = useState<FitnessGoal[]>([]);
   const [loadingFitnessGoals, setLoadingFitnessGoals] = useState(false);
+
+  // 使用场景列表
+  const [usageScenarios, setUsageScenarios] = useState<UsageScenario[]>([]);
+  const [loadingUsageScenarios, setLoadingUsageScenarios] = useState(false);
 
   /**
    * 加载肌肉类型数据
@@ -164,6 +118,24 @@ export function FitnessEquipmentModal({
       toast.error("获取健身目标失败");
     } finally {
       setLoadingFitnessGoals(false);
+    }
+  };
+
+  /**
+   * 加载使用场景
+   */
+  const loadUsageScenarios = async () => {
+    setLoadingUsageScenarios(true);
+    try {
+      const result = await usageScenarioBusiness.getUsageScenarioList({
+        limit: 100, // 获取足够多的使用场景
+      });
+      setUsageScenarios(result.items);
+    } catch (error) {
+      console.error("获取使用场景失败:", error);
+      toast.error("获取使用场景失败");
+    } finally {
+      setLoadingUsageScenarios(false);
     }
   };
 
@@ -234,20 +206,6 @@ export function FitnessEquipmentModal({
       ...fitnessEquipment,
       [field]: value,
     });
-  };
-
-  /**
-   * 处理ID数组字段变更
-   */
-  const handleArrayIdsChange = (
-    field: keyof FitnessEquipment,
-    value: string
-  ) => {
-    const ids = value
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
-    updateFitnessEquipment(field, ids);
   };
 
   /**
@@ -504,6 +462,94 @@ export function FitnessEquipmentModal({
     updateFitnessEquipment("fitnessGoalsIds", newFitnessGoals);
   };
 
+  /**
+   * 处理使用场景选择变更
+   * @param usageScenario 使用场景ID或枚举值
+   * @param checked 是否选中
+   */
+  const handleUsageScenarioChange = (usageScenario: string, checked: boolean) => {
+    let newUsageScenarios = [...(fitnessEquipment.usageScenariosIds || [])];
+
+    if (checked) {
+      // 添加使用场景
+      if (!newUsageScenarios.includes(usageScenario)) {
+        newUsageScenarios.push(usageScenario);
+      }
+    } else {
+      // 移除使用场景
+      newUsageScenarios = newUsageScenarios.filter((id) => id !== usageScenario);
+    }
+
+    updateFitnessEquipment("usageScenariosIds", newUsageScenarios);
+  };
+
+  /**
+   * 添加新的使用指南条目
+   */
+  const addUsageInstruction = () => {
+    const currentInstructions = fitnessEquipment.usageInstructions || [];
+    updateFitnessEquipment("usageInstructions", [...currentInstructions, ""]);
+  };
+
+  /**
+   * 更新使用指南条目
+   * @param index 条目索引
+   * @param value 条目值
+   */
+  const updateUsageInstruction = (index: number, value: string) => {
+    const currentInstructions = [...(fitnessEquipment.usageInstructions || [])];
+    currentInstructions[index] = value;
+    updateFitnessEquipment("usageInstructions", currentInstructions);
+  };
+
+  /**
+   * 删除使用指南条目
+   * @param index 条目索引
+   */
+  const removeUsageInstruction = (index: number) => {
+    const currentInstructions = [...(fitnessEquipment.usageInstructions || [])];
+    currentInstructions.splice(index, 1);
+    updateFitnessEquipment("usageInstructions", currentInstructions);
+  };
+
+  /**
+   * 添加新的安全提示条目
+   */
+  const addSafetyTip = () => {
+    const currentTips = Array.isArray(fitnessEquipment.safetyTips) 
+      ? fitnessEquipment.safetyTips 
+      : fitnessEquipment.safetyTips ? [fitnessEquipment.safetyTips] : [];
+    
+    updateFitnessEquipment("safetyTips", [...currentTips, ""]);
+  };
+
+  /**
+   * 更新安全提示条目
+   * @param index 条目索引
+   * @param value 条目值
+   */
+  const updateSafetyTip = (index: number, value: string) => {
+    const currentTips = Array.isArray(fitnessEquipment.safetyTips) 
+      ? [...fitnessEquipment.safetyTips] 
+      : fitnessEquipment.safetyTips ? [fitnessEquipment.safetyTips] : [];
+    
+    currentTips[index] = value;
+    updateFitnessEquipment("safetyTips", currentTips);
+  };
+
+  /**
+   * 删除安全提示条目
+   * @param index 条目索引
+   */
+  const removeSafetyTip = (index: number) => {
+    const currentTips = Array.isArray(fitnessEquipment.safetyTips) 
+      ? [...fitnessEquipment.safetyTips] 
+      : fitnessEquipment.safetyTips ? [fitnessEquipment.safetyTips] : [];
+    
+    currentTips.splice(index, 1);
+    updateFitnessEquipment("safetyTips", currentTips);
+  };
+  
   // 获取所有器械类别选项
   const categoryOptions = fitnessEquipmentBusiness.getEquipmentCategories();
 
@@ -520,6 +566,7 @@ export function FitnessEquipmentModal({
     if (isOpen) {
       loadMuscleTypes();
       loadFitnessGoals();
+      loadUsageScenarios();
     }
   }, [isOpen]);
 
@@ -650,47 +697,42 @@ export function FitnessEquipmentModal({
                           加载肌肉类型中...
                         </div>
                       ) : (
-                        muscleGroups.map((group) => (
-                          <div key={group.label} className="space-y-2">
-                            <h3 className="font-medium text-sm">
-                              {group.label}
-                            </h3>
-                            <div className="grid grid-cols-2 gap-2">
-                              {group.items.map((muscleType) => {
-                                const muscleTypeName =
-                                  getMuscleTypeLabel(muscleType);
-                                const isChecked =
-                                  fitnessEquipment.targetMusclesIds?.includes(
-                                    muscleType
-                                  ) || false;
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            {muscleTypes.map((muscleType) => {
+                              const muscleTypeName =
+                                getMuscleTypeLabel(muscleType.name);
+                              const isChecked =
+                                fitnessEquipment.targetMusclesIds?.includes(
+                                  muscleType._id
+                                ) || false;
 
-                                return (
-                                  <div
-                                    key={muscleType}
-                                    className="flex items-center space-x-2"
+                              return (
+                                <div
+                                  key={muscleType._id}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Checkbox
+                                    id={`muscle-${muscleType}`}
+                                    checked={isChecked}
+                                    onCheckedChange={(checked) =>
+                                      handleMuscleTypeChange(
+                                        muscleType._id,
+                                        !!checked
+                                      )
+                                    }
+                                  />
+                                  <label
+                                    htmlFor={`muscle-${muscleType}`}
+                                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                   >
-                                    <Checkbox
-                                      id={`muscle-${muscleType}`}
-                                      checked={isChecked}
-                                      onCheckedChange={(checked) =>
-                                        handleMuscleTypeChange(
-                                          muscleType,
-                                          !!checked
-                                        )
-                                      }
-                                    />
-                                    <label
-                                      htmlFor={`muscle-${muscleType}`}
-                                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                      {muscleTypeName}
-                                    </label>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                    {muscleTypeName}
+                                  </label>
+                                </div>
+                              );
+                            })}
                           </div>
-                        ))
+                        </div>
                       )}
 
                       {/* 自定义肌肉类型 */}
@@ -755,49 +797,45 @@ export function FitnessEquipmentModal({
                         </div>
                       ) : (
                         <>
-                          {/* 自定义健身目标 */}
-                          {fitnessGoals.filter((g) => g.isCustom).length >
+                          {/* 健身目标列表 */}
+                          {fitnessGoals.length >
                             0 && (
-                            <div className="space-y-2">
-                              <h3 className="font-medium text-sm">
-                                自定义目标
-                              </h3>
-                              <div className="grid grid-cols-2 gap-2">
-                                {fitnessGoals
-                                  .filter((g) => g.isCustom)
-                                  .map((goal) => {
-                                    const isChecked =
-                                      fitnessEquipment.fitnessGoalsIds?.includes(
-                                        goal._id
-                                      ) || false;
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                  {fitnessGoals
+                                    .map((goal) => {
+                                      const isChecked =
+                                        fitnessEquipment.fitnessGoalsIds?.includes(
+                                          goal._id
+                                        ) || false;
 
-                                    return (
-                                      <div
-                                        key={goal._id}
-                                        className="flex items-center space-x-2"
-                                      >
-                                        <Checkbox
-                                          id={`goal-${goal._id}`}
-                                          checked={isChecked}
-                                          onCheckedChange={(checked) =>
-                                            handleFitnessGoalChange(
-                                              goal._id,
-                                              !!checked
-                                            )
-                                          }
-                                        />
-                                        <label
-                                          htmlFor={`goal-${goal._id}`}
-                                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      return (
+                                        <div
+                                          key={goal._id}
+                                          className="flex items-center space-x-2"
                                         >
-                                          {goal.name}
-                                        </label>
-                                      </div>
-                                    );
-                                  })}
+                                          <Checkbox
+                                            id={`goal-${goal._id}`}
+                                            checked={isChecked}
+                                            onCheckedChange={(checked) =>
+                                              handleFitnessGoalChange(
+                                                goal._id,
+                                                !!checked
+                                              )
+                                            }
+                                          />
+                                          <label
+                                            htmlFor={`goal-${goal._id}`}
+                                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                          >
+                                            {goal.name}
+                                          </label>
+                                        </div>
+                                      );
+                                    })}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
                         </>
                       )}
                     </div>
@@ -811,58 +849,158 @@ export function FitnessEquipmentModal({
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="usageScenariosIds" className="text-right">
-                使用场景IDs
+                使用场景
               </Label>
-              <Input
-                id="usageScenariosIds"
-                value={
-                  fitnessEquipment.usageScenariosIds
-                    ? fitnessEquipment.usageScenariosIds.join(", ")
-                    : ""
-                }
-                onChange={(e) =>
-                  handleArrayIdsChange("usageScenariosIds", e.target.value)
-                }
-                placeholder="使用场景ID，多个请用逗号分隔"
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <div className="border rounded-md p-4 h-[200px]">
+                  <ScrollArea className="h-full pr-4">
+                    <div className="grid gap-6">
+                      {loadingUsageScenarios ? (
+                        <div className="text-center py-2">
+                          加载使用场景中...
+                        </div>
+                      ) : (
+                        <>
+                          {/* 使用场景列表 */}
+                          {usageScenarios.length >
+                            0 && (
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                  {usageScenarios
+                                    .map((usageScenario) => {
+                                      const isChecked =
+                                        fitnessEquipment.usageScenariosIds?.includes(
+                                          usageScenario._id
+                                        ) || false;
+
+                                      return (
+                                        <div
+                                          key={usageScenario._id}
+                                          className="flex items-center space-x-2"
+                                        >
+                                          <Checkbox
+                                            id={`usageScenario-${usageScenario._id}`}
+                                            checked={isChecked}
+                                            onCheckedChange={(checked) =>
+                                              handleUsageScenarioChange(
+                                                usageScenario._id,
+                                                !!checked
+                                              )
+                                            }
+                                          />
+                                          <label
+                                            htmlFor={`usageScenario-${usageScenario._id}`}
+                                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                          >
+                                            {usageScenario.name}
+                                          </label>
+                                        </div>
+                                      );
+                                    })}
+                                </div>
+                              </div>
+                            )}
+                        </>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  已选择 {fitnessEquipment.fitnessGoalsIds?.length || 0}{" "}
+                  个健身目标
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="usageInstructions" className="text-right">
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="usageInstructions" className="text-right pt-2">
                 使用指南
               </Label>
-              <Textarea
-                id="usageInstructions"
-                value={
-                  fitnessEquipment.usageInstructions
-                    ? fitnessEquipment.usageInstructions.join("\n")
-                    : ""
-                }
-                onChange={(e) => {
-                  const instructions = e.target.value
-                    .split("\n")
-                    .filter(Boolean);
-                  updateFitnessEquipment("usageInstructions", instructions);
-                }}
-                placeholder="每行一条使用说明"
-                className="col-span-3"
-                rows={3}
-              />
+              <div className="col-span-3 space-y-2">
+                {(fitnessEquipment.usageInstructions || []).map((instruction, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      value={instruction}
+                      onChange={(e) => updateUsageInstruction(index, e.target.value)}
+                      placeholder={`指南 ${index + 1}`}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeUsageInstruction(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addUsageInstruction}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" /> 添加使用指南
+                </Button>
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="safetyTips" className="text-right">
+            
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="safetyTips" className="text-right pt-2">
                 安全提示
               </Label>
-              <Textarea
-                id="safetyTips"
-                value={fitnessEquipment.safetyTips || ""}
-                onChange={(e) =>
-                  updateFitnessEquipment("safetyTips", e.target.value)
+              <div className="col-span-3 space-y-2">
+                {Array.isArray(fitnessEquipment.safetyTips) 
+                  ? fitnessEquipment.safetyTips.map((tip, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={tip}
+                        onChange={(e) => updateSafetyTip(index, e.target.value)}
+                        placeholder={`安全提示 ${index + 1}`}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeSafetyTip(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                  : fitnessEquipment.safetyTips && (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={fitnessEquipment.safetyTips}
+                        onChange={(e) => updateSafetyTip(0, e.target.value)}
+                        placeholder="安全提示 1"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeSafetyTip(0)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )
                 }
-                className="col-span-3"
-                rows={3}
-              />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addSafetyTip}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" /> 添加安全提示
+                </Button>
+              </div>
             </div>
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="order" className="text-right">
                 排序
@@ -926,10 +1064,10 @@ export function FitnessEquipmentModal({
               {isSubmitting
                 ? "提交中..."
                 : uploadingImages || uploadingVideos
-                ? "文件上传中..."
-                : isEditMode
-                ? "保存修改"
-                : "创建"}
+                  ? "文件上传中..."
+                  : isEditMode
+                    ? "保存修改"
+                    : "创建"}
             </Button>
           </DialogFooter>
         </form>

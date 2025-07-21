@@ -61,6 +61,11 @@ export interface FitnessEquipment {
   fitnessGoalsIds: string[];
 
   /**
+   * 使用场景ID数组
+   */
+  usageScenariosIds: string[];
+
+  /**
    * 使用指南
    */
   usageInstructions: string[];
@@ -68,12 +73,7 @@ export interface FitnessEquipment {
   /**
    * 安全提示
    */
-  safetyTips: string;
-
-  /**
-   * 使用场景ID数组
-   */
-  usageScenariosIds: string[];
+  safetyTips: string[];
 
   /**
    * 推荐的训练动作ID列表
