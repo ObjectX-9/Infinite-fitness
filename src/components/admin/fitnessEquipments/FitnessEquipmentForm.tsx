@@ -41,7 +41,6 @@ interface FitnessEquipmentFormProps {
 export function FitnessEquipmentForm({
   fitnessEquipment,
   onFitnessEquipmentChange,
-  isEditMode,
   isSubmitting,
   onUploadingChange = () => {},
 }: FitnessEquipmentFormProps) {
@@ -285,40 +284,23 @@ export function FitnessEquipmentForm({
           min={0}
         />
       </div>
-      
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="notes" className="text-right">
-          备注
+        <Label htmlFor="isCustom" className="text-right">
+          自定义
         </Label>
-        <Input
-          id="notes"
-          value={fitnessEquipment.notes || ""}
-          onChange={(e) =>
-            updateFitnessEquipment("notes", e.target.value)
-          }
-          className="col-span-3"
-        />
-      </div>
-      
-      {isEditMode && (
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="isCustom" className="text-right">
-            自定义
-          </Label>
-          <div className="col-span-3 flex items-center">
-            <input
-              type="checkbox"
-              id="isCustom"
-              checked={!!fitnessEquipment.isCustom}
-              onChange={(e) =>
-                updateFitnessEquipment("isCustom", e.target.checked)
-              }
-              className="mr-2"
-            />
-            <span>是否为自定义器械</span>
-          </div>
+        <div className="col-span-3 flex items-center">
+          <input
+            type="checkbox"
+            id="isCustom"
+            checked={!!fitnessEquipment.isCustom}
+            onChange={(e) =>
+              updateFitnessEquipment("isCustom", e.target.checked)
+            }
+            className="mr-2"
+          />
+          <span>是否为自定义器械</span>
         </div>
-      )}
+      </div>
     </div>
   );
 } 

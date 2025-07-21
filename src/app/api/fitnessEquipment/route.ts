@@ -128,6 +128,11 @@ export const POST = unifiedInterfaceProcess(async (req: NextRequest, userInfo: U
       fitnessEquipmentData.order = maxOrderRecord ? maxOrderRecord.order + 1 : 1;
     }
 
+    // 确保videoUrls存在
+    if (!fitnessEquipmentData.videoUrls) {
+      fitnessEquipmentData.videoUrls = [];
+    }
+
     const saveFitnessEquipmentData = {
       ...fitnessEquipmentData,
       userId: userInfo?.userId,
@@ -179,33 +184,45 @@ export const DELETE = unifiedInterfaceProcess(async (req: NextRequest, userInfo:
  * 更新健身器械
  */
 export const PUT = unifiedInterfaceProcess(async (req: NextRequest, userInfo: UserInfo | null) => {
-  const fitnessEquipmentInfo = await parseRequestBody(req);
+  try {
+    const fitnessEquipmentInfo = await parseRequestBody(req);
 
-  RequestValidator.validateRequired(fitnessEquipmentInfo, ["id"]);
-  const { id } = fitnessEquipmentInfo;
 
-  const userId = userInfo?.userId;
-  const isAdmin = userInfo?.membershipLevel === MembershipLevel.ADMIN;
+    RequestValidator.validateRequired(fitnessEquipmentInfo, ["id"]);
+    const { id } = fitnessEquipmentInfo;
 
-  // 构建查询条件，确保只能更新自己创建的自定义器械或管理员可更新所有
-  const query: FitnessEquipmentQuery = { _id: id };
-  if (!isAdmin) {
-    query.userId = userId;
-    query.isCustom = true;
+    const userId = userInfo?.userId;
+    const isAdmin = userInfo?.membershipLevel === MembershipLevel.ADMIN;
+
+    // 构建查询条件，确保只能更新自己创建的自定义器械或管理员可更新所有
+    const query: FitnessEquipmentQuery = { _id: id };
+    if (!isAdmin) {
+      query.userId = userId;
+      query.isCustom = true;
+    }
+
+    // 更新时间
+    fitnessEquipmentInfo.updatedAt = new Date();
+
+    // 确保videoUrls存在
+    if (!fitnessEquipmentInfo.videoUrls) {
+      fitnessEquipmentInfo.videoUrls = [];
+    }
+
+
+    const fitnessEquipment = await FitnessEquipmentModel.findOneAndUpdate(
+      query,
+      { $set: fitnessEquipmentInfo },
+      { new: true }
+    );
+
+    if (!fitnessEquipment) {
+      throw ApiErrors.NOT_FOUND("未找到可更新的健身器械或无权限更新");
+    }
+
+    return successResponse({ success: true, fitnessEquipment }, "更新健身器械成功");
+  } catch (error) {
+    console.error("更新健身器械出错:", error);
+    throw error;
   }
-
-  // 更新时间
-  fitnessEquipmentInfo.updatedAt = new Date();
-
-  const fitnessEquipment = await FitnessEquipmentModel.findOneAndUpdate(
-    query,
-    { $set: fitnessEquipmentInfo },
-    { new: true }
-  );
-
-  if (!fitnessEquipment) {
-    throw ApiErrors.NOT_FOUND("未找到可更新的健身器械或无权限更新");
-  }
-
-  return successResponse({ success: true, fitnessEquipment }, "更新健身器械成功");
 }); 

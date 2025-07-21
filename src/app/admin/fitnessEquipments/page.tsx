@@ -123,10 +123,12 @@ export default function FitnessEquipmentManagement() {
   const openCreateDialog = () => {
     setCurrentFitnessEquipment({
       imageUrls: [],
+      videoUrls: [],
       targetMusclesIds: [],
       fitnessGoalsIds: [],
       usageScenariosIds: [],
       usageInstructions: [],
+      safetyTips: [],
       order: 0,
       isCustom: false,
     });

@@ -76,21 +76,6 @@ export interface FitnessEquipment {
   safetyTips: string[];
 
   /**
-   * 推荐的训练动作ID列表
-   */
-  recommendedExercisesIds?: string[];
-
-  /**
-   * 替代器械ID列表
-   */
-  alternativesIds?: string[];
-
-  /**
-   * 特点和优势
-   */
-  featuresAndBenefits?: string[];
-
-  /**
    * 创建时间
    */
   createdAt: Date;
@@ -109,11 +94,6 @@ export interface FitnessEquipment {
    * 创建用户ID
    */
   userId?: string;
-
-  /**
-   * 备注
-   */
-  notes?: string;
 
   /**
    * 排序

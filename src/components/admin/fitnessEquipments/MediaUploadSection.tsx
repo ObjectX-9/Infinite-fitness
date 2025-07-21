@@ -86,76 +86,93 @@ export function MediaUploadSection({
     onUploadingChange("images", true);
 
     try {
-      // 更新所有待上传文件的状态为上传中
-      const updatedFiles = files.map((file) => {
-        if (newFiles.includes(file)) {
-          return {
-            ...file,
-            status: "uploading" as "idle" | "uploading" | "success" | "error",
-            progress: 0,
-          };
-        }
-        return file;
-      });
-      setSelectedImageFiles(updatedFiles);
+      // 上传图片文件
+      const uploadedImageUrls: string[] = [];
+      
+      if (newFiles.length > 0) {
+        for (let i = 0; i < newFiles.length; i++) {
+          const fileObj = newFiles[i];
+          
+          // 更新上传状态
+          const updatedImageFiles = [...files];
+          const fileIndex = updatedImageFiles.findIndex(f => f === fileObj);
+          
+          if (fileIndex !== -1) {
+            updatedImageFiles[fileIndex] = {
+              ...fileObj,
+              status: "uploading",
+              progress: 0,
+            };
+            setSelectedImageFiles(updatedImageFiles);
 
-      // 上传所有新文件
-      const uploadPromises = newFiles.map(async (fileObj) => {
-        try {
-          const formData = new FormData();
-          formData.append("file", fileObj.file);
-          formData.append("path", "fitness-equipment-images");
-          const response = await uploadBusiness.uploadFile(formData);
+            try {
+              // 模拟进度更新
+              const updateProgress = (progress: number) => {
+                const progressUpdatedFiles = [...updatedImageFiles];
+                progressUpdatedFiles[fileIndex] = {
+                  ...progressUpdatedFiles[fileIndex],
+                  progress,
+                };
+                setSelectedImageFiles(progressUpdatedFiles);
+              };
 
-          // 更新文件状态
-          setSelectedImageFiles((prev) => {
-            const newFiles = [...prev];
-            const fileIndex = newFiles.findIndex((f) => f === fileObj);
-            if (fileIndex !== -1) {
-              newFiles[fileIndex] = {
-                ...newFiles[fileIndex],
-                status: "success" as "idle" | "uploading" | "success" | "error",
+              for (let p = 10; p <= 90; p += 10) {
+                await new Promise((resolve) => setTimeout(resolve, 100));
+                updateProgress(p);
+              }
+
+              // 执行实际上传
+              const response = await uploadBusiness.uploadFitnessEquipmentImage(
+                fileObj.file,
+                "image/jpeg,image/png,image/gif"
+              );
+              uploadedImageUrls.push(response.url);
+
+              // 更新状态为成功
+              const successUpdatedFiles = [...files];
+              successUpdatedFiles[fileIndex] = {
+                ...successUpdatedFiles[fileIndex],
+                status: "success",
                 progress: 100,
                 serverUrl: response.url,
               };
-            }
-            return newFiles;
-          });
-
-          return response.url;
-        } catch (error) {
-          console.error("上传图片失败:", error);
-          // 更新文件状态为错误
-          setSelectedImageFiles((prev) => {
-            const newFiles = [...prev];
-            const fileIndex = newFiles.findIndex((f) => f === fileObj);
-            if (fileIndex !== -1) {
-              newFiles[fileIndex] = {
-                ...newFiles[fileIndex],
-                status: "error" as "idle" | "uploading" | "success" | "error",
+              setSelectedImageFiles(successUpdatedFiles);
+            } catch (error) {
+              // 更新状态为失败
+              const errorUpdatedFiles = [...files];
+              errorUpdatedFiles[fileIndex] = {
+                ...errorUpdatedFiles[fileIndex],
+                status: "error",
                 error: "上传失败",
               };
+              setSelectedImageFiles(errorUpdatedFiles);
+              console.error("上传图片失败:", error);
+              toast.error(`图片 ${fileObj.file.name} 上传失败`);
+              // 注意这里与BodyPartModal不同，我们不抛出错误，而是继续处理下一个文件
             }
-            return newFiles;
-          });
-
-          toast.error(`图片 ${fileObj.file.name} 上传失败`);
-          return null;
+          }
         }
-      });
-
-      const uploadedUrls = await Promise.all(uploadPromises);
-      const validUrls = uploadedUrls.filter(Boolean) as string[];
+      }
       
       // 更新图片URL列表
       const updatedUrls = [...imageUrls];
-      validUrls.forEach(url => {
+      uploadedImageUrls.forEach(url => {
         if (!updatedUrls.includes(url)) {
           updatedUrls.push(url);
         }
       });
       
       onMediaChange("imageUrls", updatedUrls);
+      
+      // 显示成功消息
+      if (uploadedImageUrls.length > 0) {
+        toast.success(`成功上传${uploadedImageUrls.length}张图片`);
+      }
+    } catch (error) {
+      console.error("图片上传过程中发生错误:", error);
+      toast.error("文件上传失败", {
+        description: "请稍后再试或联系管理员",
+      });
     } finally {
       onUploadingChange("images", false);
     }
@@ -177,76 +194,94 @@ export function MediaUploadSection({
     onUploadingChange("videos", true);
 
     try {
-      // 更新所有待上传文件的状态为上传中
-      const updatedFiles = files.map((file) => {
-        if (newFiles.includes(file)) {
-          return {
-            ...file,
-            status: "uploading" as "idle" | "uploading" | "success" | "error",
-            progress: 0,
-          };
-        }
-        return file;
-      });
-      setSelectedVideoFiles(updatedFiles);
+      // 上传视频文件
+      const uploadedVideoUrls: string[] = [];
+      
+      if (newFiles.length > 0) {
+        for (let i = 0; i < newFiles.length; i++) {
+          const fileObj = newFiles[i];
+          
+          // 更新上传状态
+          const updatedVideoFiles = [...files];
+          const fileIndex = updatedVideoFiles.findIndex(f => f === fileObj);
+          
+          if (fileIndex !== -1) {
+            updatedVideoFiles[fileIndex] = {
+              ...fileObj,
+              status: "uploading",
+              progress: 0,
+            };
+            setSelectedVideoFiles(updatedVideoFiles);
 
-      // 上传所有新文件
-      const uploadPromises = newFiles.map(async (fileObj) => {
-        try {
-          const formData = new FormData();
-          formData.append("file", fileObj.file);
-          formData.append("path", "fitness-equipment-videos");
-          const response = await uploadBusiness.uploadFile(formData);
+            try {
+              // 模拟进度更新
+              const updateProgress = (progress: number) => {
+                const progressUpdatedFiles = [...updatedVideoFiles];
+                progressUpdatedFiles[fileIndex] = {
+                  ...progressUpdatedFiles[fileIndex],
+                  progress,
+                };
+                setSelectedVideoFiles(progressUpdatedFiles);
+              };
 
-          // 更新文件状态
-          setSelectedVideoFiles((prev) => {
-            const newFiles = [...prev];
-            const fileIndex = newFiles.findIndex((f) => f === fileObj);
-            if (fileIndex !== -1) {
-              newFiles[fileIndex] = {
-                ...newFiles[fileIndex],
-                status: "success" as "idle" | "uploading" | "success" | "error",
+              for (let p = 5; p <= 95; p += 5) {
+                await new Promise((resolve) => setTimeout(resolve, 100));
+                updateProgress(p);
+              }
+
+              // 执行实际上传
+              const response = await uploadBusiness.uploadFitnessEquipmentVideo(
+                fileObj.file,
+                "video/mp4,video/quicktime,video/x-msvideo"
+              );
+              uploadedVideoUrls.push(response.url);
+              console.log(`视频文件 ${i+1}/${newFiles.length} 上传成功:`, response.url);
+
+              // 更新状态为成功
+              const successUpdatedFiles = [...files];
+              successUpdatedFiles[fileIndex] = {
+                ...successUpdatedFiles[fileIndex],
+                status: "success",
                 progress: 100,
                 serverUrl: response.url,
               };
-            }
-            return newFiles;
-          });
-
-          return response.url;
-        } catch (error) {
-          console.error("上传视频失败:", error);
-          // 更新文件状态为错误
-          setSelectedVideoFiles((prev) => {
-            const newFiles = [...prev];
-            const fileIndex = newFiles.findIndex((f) => f === fileObj);
-            if (fileIndex !== -1) {
-              newFiles[fileIndex] = {
-                ...newFiles[fileIndex],
-                status: "error" as "idle" | "uploading" | "success" | "error",
+              setSelectedVideoFiles(successUpdatedFiles);
+            } catch (error) {
+              // 更新状态为失败
+              const errorUpdatedFiles = [...files];
+              errorUpdatedFiles[fileIndex] = {
+                ...errorUpdatedFiles[fileIndex],
+                status: "error",
                 error: "上传失败",
               };
+              setSelectedVideoFiles(errorUpdatedFiles);
+              console.error("上传视频失败:", error);
+              toast.error(`视频 ${fileObj.file.name} 上传失败`);
+              // 注意这里与BodyPartModal不同，我们不抛出错误，而是继续处理下一个文件
             }
-            return newFiles;
-          });
-
-          toast.error(`视频 ${fileObj.file.name} 上传失败`);
-          return null;
+          }
         }
-      });
-
-      const uploadedUrls = await Promise.all(uploadPromises);
-      const validUrls = uploadedUrls.filter(Boolean) as string[];
+      }
       
       // 更新视频URL列表
       const updatedUrls = [...videoUrls];
-      validUrls.forEach(url => {
+      uploadedVideoUrls.forEach(url => {
         if (!updatedUrls.includes(url)) {
           updatedUrls.push(url);
         }
       });
       
       onMediaChange("videoUrls", updatedUrls);
+      
+      // 显示成功消息
+      if (uploadedVideoUrls.length > 0) {
+        toast.success(`成功上传${uploadedVideoUrls.length}个视频`);
+      }
+    } catch (error) {
+      console.error("视频上传过程中发生错误:", error);
+      toast.error("文件上传失败", {
+        description: "请稍后再试或联系管理员",
+      });
     } finally {
       onUploadingChange("videos", false);
     }
